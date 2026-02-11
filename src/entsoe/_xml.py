@@ -66,9 +66,10 @@ def _parse_resolution(resolution: str) -> timedelta:
 def _extract_point_value(point: ET.Element) -> float | None:
     """Extract the numeric value from a Point element.
 
-    Handles both <quantity> (load/generation) and <price.amount> (prices).
+    Handles <quantity> (load/generation), <price.amount> (day-ahead prices),
+    and <imbalance_Price.amount> (balancing).
     """
-    for tag in ("quantity", "price.amount"):
+    for tag in ("quantity", "price.amount", "imbalance_Price.amount"):
         text = _find_text(point, tag)
         if text is not None:
             return float(text)

@@ -1,16 +1,38 @@
-# Python-generated files
+# Python
 __pycache__/
-*.py[oc]
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
 build/
 dist/
 wheels/
-*.egg-info
+*.whl
 
 # Virtual environments
-.venv
+.venv/
 
 # Secrets
 .env
 
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
 # Claude
 .claude/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS
+.DS_Store
+Thumbs.db

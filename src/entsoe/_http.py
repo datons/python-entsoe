@@ -7,8 +7,10 @@ Handles:
 - Response validation
 """
 
+import io
 import logging
 import time
+import zipfile
 from datetime import timedelta
 
 import pandas as pd
@@ -65,6 +67,24 @@ def _split_years(
     return chunks
 
 
+def _extract_xml(response: requests.Response) -> str:
+    """Extract XML from a response, handling ZIP-compressed responses.
+
+    Some ENTSO-E endpoints (imbalance prices/volumes, unavailability)
+    return ZIP archives containing one or more XML files.
+    """
+    content = response.content
+    if content[:2] == b"PK":  # ZIP magic bytes
+        with zipfile.ZipFile(io.BytesIO(content)) as zf:
+            xml_parts = [zf.read(name).decode("utf-8") for name in zf.namelist()]
+        if len(xml_parts) == 1:
+            return xml_parts[0]
+        # Multiple XMLs in ZIP: merge by returning as a list marker
+        # We wrap them so the query() method can handle them like multi-chunk
+        return xml_parts
+    return response.text
+
+
 class HttpClient:
     """Low-level HTTP client for the ENTSO-E API."""
 
@@ -86,11 +106,11 @@ class HttpClient:
         params: dict,
         start: pd.Timestamp,
         end: pd.Timestamp,
-    ) -> str:
+    ) -> str | list[str]:
         """Execute a query against the ENTSO-E API.
 
         Automatically splits requests spanning more than 1 year and
-        concatenates the XML responses.
+        handles ZIP-compressed responses (multiple XMLs inside).
 
         Args:
             params: API parameters (documentType, processType, etc.).
@@ -99,7 +119,8 @@ class HttpClient:
             end: Period end (tz-aware).
 
         Returns:
-            Raw XML response text.
+            A single XML string, or a list of XML strings when the
+            response spans multiple chunks or contains a multi-file ZIP.
 
         Raises:
             ENTSOEError: On API errors.
@@ -108,20 +129,18 @@ class HttpClient:
         start, end = _validate_timestamps(start, end)
         chunks = _split_years(start, end)
 
+        # Collect all XML strings, flattening any lists from ZIP responses
         xml_parts: list[str] = []
         for chunk_start, chunk_end in chunks:
-            xml = self._single_request(params, chunk_start, chunk_end)
-            xml_parts.append(xml)
+            result = self._single_request(params, chunk_start, chunk_end)
+            if isinstance(result, list):
+                xml_parts.extend(result)
+            else:
+                xml_parts.append(result)
 
-        # If only one chunk, return directly
         if len(xml_parts) == 1:
             return xml_parts[0]
-
-        # For multi-chunk: return the last chunk's full XML
-        # (parsing layer will merge TimeSeries from all chunks)
-        # Actually, we concatenate by re-parsing and merging TimeSeries.
-        # For simplicity, return all XMLs joined — the parser handles this.
-        return xml_parts[0] if len(xml_parts) == 1 else xml_parts
+        return xml_parts
 
     def query_raw(
         self,
@@ -177,6 +196,6 @@ class HttpClient:
                     status_code=response.status_code,
                 )
 
-            return response.text
+            return _extract_xml(response)
 
         raise ENTSOEError("Max retries exceeded.")

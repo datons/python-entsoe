@@ -21,7 +21,7 @@ class Client:
 
     Usage::
 
-        from library import Client
+        from entsoe import Client
         import pandas as pd
 
         client = Client()  # reads ENTSOE_API_KEY from env
