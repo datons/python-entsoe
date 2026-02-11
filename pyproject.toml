@@ -23,7 +23,7 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/jsulopzs/python-entsoe"
+Repository = "https://github.com/datons/python-entsoe"
 
 [build-system]
 requires = ["hatchling"]
