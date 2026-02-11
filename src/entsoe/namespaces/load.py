@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from ._base import BaseNamespace
+from ._base import BaseNamespace, Timestamp
 
 
 class LoadNamespace(BaseNamespace):
@@ -17,15 +17,15 @@ class LoadNamespace(BaseNamespace):
 
     def actual(
         self,
-        start: pd.Timestamp,
-        end: pd.Timestamp,
+        start: Timestamp,
+        end: Timestamp,
         country: str,
     ) -> pd.DataFrame:
         """Query actual total system load.
 
         Args:
-            start: Period start (tz-aware).
-            end: Period end (tz-aware).
+            start: Period start — date string or tz-aware Timestamp.
+            end: Period end — date string or tz-aware Timestamp.
             country: Country code (e.g., "FR", "DE").
 
         Returns:
@@ -40,15 +40,15 @@ class LoadNamespace(BaseNamespace):
 
     def forecast(
         self,
-        start: pd.Timestamp,
-        end: pd.Timestamp,
+        start: Timestamp,
+        end: Timestamp,
         country: str,
     ) -> pd.DataFrame:
         """Query day-ahead load forecast.
 
         Args:
-            start: Period start (tz-aware).
-            end: Period end (tz-aware).
+            start: Period start — date string or tz-aware Timestamp.
+            end: Period end — date string or tz-aware Timestamp.
             country: Country code (e.g., "FR", "DE").
 
         Returns:

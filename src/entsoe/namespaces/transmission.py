@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from ._base import BaseNamespace
+from ._base import BaseNamespace, Timestamp
 
 
 class TransmissionNamespace(BaseNamespace):
@@ -18,16 +18,16 @@ class TransmissionNamespace(BaseNamespace):
 
     def crossborder_flows(
         self,
-        start: pd.Timestamp,
-        end: pd.Timestamp,
+        start: Timestamp,
+        end: Timestamp,
         country_from: str,
         country_to: str,
     ) -> pd.DataFrame:
         """Query physical cross-border flows.
 
         Args:
-            start: Period start (tz-aware).
-            end: Period end (tz-aware).
+            start: Period start — date string or tz-aware Timestamp.
+            end: Period end — date string or tz-aware Timestamp.
             country_from: Exporting country code (e.g., "FR").
             country_to: Importing country code (e.g., "DE").
 
@@ -43,16 +43,16 @@ class TransmissionNamespace(BaseNamespace):
 
     def scheduled_exchanges(
         self,
-        start: pd.Timestamp,
-        end: pd.Timestamp,
+        start: Timestamp,
+        end: Timestamp,
         country_from: str,
         country_to: str,
     ) -> pd.DataFrame:
         """Query scheduled commercial exchanges (day-ahead).
 
         Args:
-            start: Period start (tz-aware).
-            end: Period end (tz-aware).
+            start: Period start — date string or tz-aware Timestamp.
+            end: Period end — date string or tz-aware Timestamp.
             country_from: Exporting country code (e.g., "FR").
             country_to: Importing country code (e.g., "DE").
 
@@ -68,16 +68,16 @@ class TransmissionNamespace(BaseNamespace):
 
     def net_transfer_capacity(
         self,
-        start: pd.Timestamp,
-        end: pd.Timestamp,
+        start: Timestamp,
+        end: Timestamp,
         country_from: str,
         country_to: str,
     ) -> pd.DataFrame:
         """Query day-ahead net transfer capacity.
 
         Args:
-            start: Period start (tz-aware).
-            end: Period end (tz-aware).
+            start: Period start — date string or tz-aware Timestamp.
+            end: Period end — date string or tz-aware Timestamp.
             country_from: Exporting country code (e.g., "FR").
             country_to: Importing country code (e.g., "DE").
 

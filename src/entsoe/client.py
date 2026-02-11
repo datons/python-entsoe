@@ -22,16 +22,20 @@ class Client:
     Usage::
 
         from entsoe import Client
-        import pandas as pd
 
         client = Client()  # reads ENTSOE_API_KEY from env
 
-        start = pd.Timestamp("2024-01-01", tz="Europe/Paris")
-        end = pd.Timestamp("2024-01-07", tz="Europe/Paris")
+        # Simple — just pass date strings (default tz: Europe/Brussels)
+        df = client.load.actual("2024-01-01", "2024-01-07", country="FR")
+        df = client.prices.day_ahead("2024-01-01", "2024-01-07", country="FR")
 
-        df = client.load.actual(start, end, country="FR")
-        df = client.prices.day_ahead(start, end, country="FR")
-        df = client.generation.actual(start, end, country="FR")
+        # pd.Timestamp still works — its timezone takes priority
+        import pandas as pd
+        start = pd.Timestamp("2024-01-01", tz="Europe/Paris")
+        df = client.generation.actual(start, "2024-01-07", country="FR")
+
+        # Override default timezone
+        client = Client(tz="UTC")
 
     Namespaces:
         load: Actual load and load forecast.
@@ -41,12 +45,20 @@ class Client:
         balancing: Imbalance prices and volumes.
     """
 
-    def __init__(self, api_key: str | None = None) -> None:
+    DEFAULT_TZ = "Europe/Brussels"
+
+    def __init__(
+        self,
+        api_key: str | None = None,
+        tz: str = DEFAULT_TZ,
+    ) -> None:
         """Initialize the client.
 
         Args:
             api_key: ENTSO-E API key. If not provided, reads from
                      the ``ENTSOE_API_KEY`` environment variable.
+            tz: Default timezone for string timestamps. Defaults to
+                ``Europe/Brussels`` (CET — the ENTSO-E standard).
 
         Raises:
             ValueError: If no API key is found.
@@ -60,8 +72,8 @@ class Client:
 
         http = HttpClient(api_key=resolved_key)
 
-        self.load = LoadNamespace(http)
-        self.prices = PricesNamespace(http)
-        self.generation = GenerationNamespace(http)
-        self.transmission = TransmissionNamespace(http)
-        self.balancing = BalancingNamespace(http)
+        self.load = LoadNamespace(http, tz=tz)
+        self.prices = PricesNamespace(http, tz=tz)
+        self.generation = GenerationNamespace(http, tz=tz)
+        self.transmission = TransmissionNamespace(http, tz=tz)
+        self.balancing = BalancingNamespace(http, tz=tz)

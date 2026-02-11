@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from ._base import BaseNamespace
+from ._base import BaseNamespace, Timestamp
 
 
 class GenerationNamespace(BaseNamespace):
@@ -19,16 +19,16 @@ class GenerationNamespace(BaseNamespace):
 
     def actual(
         self,
-        start: pd.Timestamp,
-        end: pd.Timestamp,
+        start: Timestamp,
+        end: Timestamp,
         country: str,
         psr_type: str | None = None,
     ) -> pd.DataFrame:
         """Query actual generation output per type.
 
         Args:
-            start: Period start (tz-aware).
-            end: Period end (tz-aware).
+            start: Period start — date string or tz-aware Timestamp.
+            end: Period end — date string or tz-aware Timestamp.
             country: Country code (e.g., "FR", "DE").
             psr_type: Optional PSR type code (e.g., "B16" for Solar,
                       "B19" for Wind Onshore). If None, returns all types.
@@ -47,16 +47,16 @@ class GenerationNamespace(BaseNamespace):
 
     def forecast(
         self,
-        start: pd.Timestamp,
-        end: pd.Timestamp,
+        start: Timestamp,
+        end: Timestamp,
         country: str,
         psr_type: str | None = None,
     ) -> pd.DataFrame:
         """Query day-ahead generation forecast (wind and solar).
 
         Args:
-            start: Period start (tz-aware).
-            end: Period end (tz-aware).
+            start: Period start — date string or tz-aware Timestamp.
+            end: Period end — date string or tz-aware Timestamp.
             country: Country code (e.g., "FR", "DE").
             psr_type: Optional PSR type code to filter by.
 
@@ -74,16 +74,16 @@ class GenerationNamespace(BaseNamespace):
 
     def installed_capacity(
         self,
-        start: pd.Timestamp,
-        end: pd.Timestamp,
+        start: Timestamp,
+        end: Timestamp,
         country: str,
         psr_type: str | None = None,
     ) -> pd.DataFrame:
         """Query installed generation capacity per type.
 
         Args:
-            start: Period start (tz-aware).
-            end: Period end (tz-aware).
+            start: Period start — date string or tz-aware Timestamp.
+            end: Period end — date string or tz-aware Timestamp.
             country: Country code (e.g., "FR", "DE").
             psr_type: Optional PSR type code to filter by.
 
@@ -101,16 +101,16 @@ class GenerationNamespace(BaseNamespace):
 
     def per_plant(
         self,
-        start: pd.Timestamp,
-        end: pd.Timestamp,
+        start: Timestamp,
+        end: Timestamp,
         country: str,
         psr_type: str | None = None,
     ) -> pd.DataFrame:
         """Query actual generation per production unit.
 
         Args:
-            start: Period start (tz-aware).
-            end: Period end (tz-aware).
+            start: Period start — date string or tz-aware Timestamp.
+            end: Period end — date string or tz-aware Timestamp.
             country: Country code (e.g., "FR", "DE").
             psr_type: Optional PSR type code to filter by.
 

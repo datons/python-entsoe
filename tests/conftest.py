@@ -2,7 +2,6 @@
 
 import os
 
-import pandas as pd
 import pytest
 
 from entsoe import Client
@@ -30,9 +29,6 @@ def client() -> Client:
 
 
 @pytest.fixture(scope="session")
-def short_range() -> tuple[pd.Timestamp, pd.Timestamp]:
+def short_range() -> tuple[str, str]:
     """A 1-day range to minimize API calls."""
-    return (
-        pd.Timestamp("2024-06-03", tz="Europe/Paris"),
-        pd.Timestamp("2024-06-04", tz="Europe/Paris"),
-    )
+    return ("2024-06-03", "2024-06-04")

@@ -12,14 +12,21 @@ pip install python-entsoe
 
 ```python
 from entsoe import Client
-import pandas as pd
 
 client = Client()  # reads ENTSOE_API_KEY from environment
 
-start = pd.Timestamp("2024-06-01", tz="Europe/Paris")
-end = pd.Timestamp("2024-06-08", tz="Europe/Paris")
+df = client.load.actual("2024-06-01", "2024-06-08", country="FR")
+```
 
-df = client.load.actual(start, end, country="FR")
+Strings are interpreted as timestamps in `Europe/Brussels` (CET — the ENTSO-E standard). You can override this per-client or pass `pd.Timestamp` objects directly:
+
+```python
+client = Client(tz="UTC")  # override default timezone
+
+# pd.Timestamp still works — its timezone takes priority
+import pandas as pd
+start = pd.Timestamp("2024-06-01", tz="Europe/Paris")
+df = client.load.actual(start, "2024-06-08", country="FR")
 ```
 
 Every method returns a `pandas.DataFrame` with a `timestamp` column (UTC) and a `value` column.
@@ -158,15 +165,24 @@ print(PSR_TYPES["B16"])  # "Solar"
 
 ## Timestamps
 
-All `start` and `end` parameters must be **timezone-aware** `pd.Timestamp` objects:
+All `start` and `end` parameters accept **date strings** or **tz-aware `pd.Timestamp`** objects:
 
 ```python
-# Correct
-start = pd.Timestamp("2024-01-01", tz="Europe/Paris")
-start = pd.Timestamp("2024-01-01", tz="UTC")
+# Simple — just strings (uses client's default tz: Europe/Brussels)
+df = client.load.actual("2024-01-01", "2024-01-07", country="FR")
 
-# Wrong — will raise InvalidParameterError
-start = pd.Timestamp("2024-01-01")
+# pd.Timestamp with explicit timezone — takes priority over default
+df = client.load.actual(
+    pd.Timestamp("2024-01-01", tz="Europe/Paris"),
+    pd.Timestamp("2024-01-07", tz="Europe/Paris"),
+    country="FR",
+)
+
+# Mixing is fine
+df = client.load.actual("2024-01-01", pd.Timestamp("2024-01-07", tz="UTC"), country="FR")
+
+# Naive pd.Timestamp (no tz) — still raises InvalidParameterError
+start = pd.Timestamp("2024-01-01")  # ← no tz, will error
 ```
 
 Returned timestamps are always in **UTC**.

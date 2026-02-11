@@ -71,8 +71,8 @@ Querying actual electricity load and forecasts from the ENTSO-E Transparency Pla
         (
             "code",
             """\
-start = pd.Timestamp("2024-06-01", tz="Europe/Paris")
-end = pd.Timestamp("2024-06-08", tz="Europe/Paris")
+start = "2024-06-01"
+end = "2024-06-08"
 
 df_load = client.load.actual(start, end, country="FR")
 df_load.head()""",
@@ -146,8 +146,8 @@ fig.show()""",
         (
             "code",
             """\
-start = pd.Timestamp("2024-06-03", tz="Europe/Paris")
-end = pd.Timestamp("2024-06-04", tz="Europe/Paris")
+start = "2024-06-03"
+end = "2024-06-04"
 
 countries = {"FR": "France", "DE_LU": "Germany", "ES": "Spain"}
 frames = []
@@ -191,8 +191,8 @@ Querying and visualizing day-ahead electricity market prices.
         (
             "code",
             """\
-start = pd.Timestamp("2024-06-01", tz="Europe/Paris")
-end = pd.Timestamp("2024-06-08", tz="Europe/Paris")
+start = "2024-06-01"
+end = "2024-06-08"
 
 df_prices = client.prices.day_ahead(start, end, country="FR")
 df_prices.head()""",
@@ -257,8 +257,8 @@ fig.show()""",
         (
             "code",
             """\
-start = pd.Timestamp("2024-06-01", tz="Europe/Paris")
-end = pd.Timestamp("2024-07-01", tz="Europe/Paris")
+start = "2024-06-01"
+end = "2024-07-01"
 
 df_month = client.prices.day_ahead(start, end, country="FR")
 df_month["hour"] = df_month["timestamp"].dt.hour
@@ -301,8 +301,8 @@ Querying actual generation per type, renewable output, and installed capacity.
         (
             "code",
             """\
-start = pd.Timestamp("2024-06-01", tz="Europe/Paris")
-end = pd.Timestamp("2024-06-08", tz="Europe/Paris")
+start = "2024-06-01"
+end = "2024-06-08"
 
 df_gen = client.generation.actual(start, end, country="FR")
 df_gen["fuel"] = df_gen["psr_type"].map(PSR_TYPES)
@@ -346,8 +346,8 @@ fig.show()""",
         (
             "code",
             """\
-start = pd.Timestamp("2024-06-03", tz="Europe/Paris")
-end = pd.Timestamp("2024-06-06", tz="Europe/Paris")
+start = "2024-06-03"
+end = "2024-06-06"
 
 df_solar = client.generation.actual(start, end, country="FR", psr_type="B16")
 df_solar["fuel"] = "Solar"
@@ -404,8 +404,8 @@ fig.show()""",
         (
             "code",
             """\
-start = pd.Timestamp("2024-01-01", tz="Europe/Paris")
-end = pd.Timestamp("2024-12-31", tz="Europe/Paris")
+start = "2024-01-01"
+end = "2024-12-31"
 
 df_cap = client.generation.installed_capacity(start, end, country="FR")
 df_cap["fuel"] = df_cap["psr_type"].map(PSR_TYPES)
@@ -446,8 +446,8 @@ Querying cross-border flows and scheduled exchanges between countries.
         (
             "code",
             """\
-start = pd.Timestamp("2024-06-01", tz="Europe/Paris")
-end = pd.Timestamp("2024-06-08", tz="Europe/Paris")
+start = "2024-06-01"
+end = "2024-06-08"
 
 df_fr_de = client.transmission.crossborder_flows(
     start, end, country_from="FR", country_to="DE_LU"
@@ -522,8 +522,8 @@ fig.show()""",
         (
             "code",
             """\
-start = pd.Timestamp("2024-06-03", tz="Europe/Paris")
-end = pd.Timestamp("2024-06-04", tz="Europe/Paris")
+start = "2024-06-03"
+end = "2024-06-04"
 
 borders = {"DE_LU": "→ Germany", "ES": "→ Spain", "GB": "→ Great Britain", "IT_NORTH": "→ Italy (North)"}
 frames = []
@@ -552,8 +552,8 @@ fig.show()""",
         (
             "code",
             """\
-start = pd.Timestamp("2024-06-01", tz="Europe/Paris")
-end = pd.Timestamp("2024-06-08", tz="Europe/Paris")
+start = "2024-06-01"
+end = "2024-06-08"
 
 df_ntc = client.transmission.net_transfer_capacity(
     start, end, country_from="FR", country_to="ES"
@@ -604,8 +604,8 @@ Querying imbalance prices and volumes.
         (
             "code",
             """\
-start = pd.Timestamp("2024-06-01", tz="Europe/Paris")
-end = pd.Timestamp("2024-06-08", tz="Europe/Paris")
+start = "2024-06-01"
+end = "2024-06-08"
 
 df_prices = client.balancing.imbalance_prices(start, end, country="FR")
 df_prices.head()""",

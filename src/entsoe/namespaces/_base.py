@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 import pandas as pd
 
@@ -12,6 +12,9 @@ from .._xml import parse_timeseries
 if TYPE_CHECKING:
     from .._http import HttpClient
 
+#: Accepted timestamp types for public namespace methods.
+Timestamp = Union[str, pd.Timestamp]
+
 
 class BaseNamespace:
     """Base class for domain namespaces.
@@ -20,17 +23,35 @@ class BaseNamespace:
     common helper methods for building queries and parsing responses.
     """
 
-    def __init__(self, http: HttpClient) -> None:
+    def __init__(self, http: HttpClient, *, tz: str = "Europe/Brussels") -> None:
         self._http = http
+        self._tz = tz
+
+    # ------------------------------------------------------------------
+    # Timestamp coercion
+    # ------------------------------------------------------------------
+
+    def _resolve_ts(self, value: Timestamp) -> pd.Timestamp:
+        """Coerce *value* to a tz-aware :class:`pd.Timestamp`.
+
+        * ``str`` → ``pd.Timestamp(value, tz=self._tz)``
+        * ``pd.Timestamp`` with tz → returned unchanged
+        * ``pd.Timestamp`` without tz → raises (existing behaviour)
+        """
+        if isinstance(value, str):
+            return pd.Timestamp(value, tz=self._tz)
+        return value  # pd.Timestamp — _validate_timestamps checks tz later
 
     def _query(
         self,
         params: dict,
-        start: pd.Timestamp,
-        end: pd.Timestamp,
+        start: Timestamp,
+        end: Timestamp,
     ) -> pd.DataFrame:
         """Execute a query and parse the XML response into a DataFrame."""
-        result = self._http.query(params, start, end)
+        start_ts = self._resolve_ts(start)
+        end_ts = self._resolve_ts(end)
+        result = self._http.query(params, start_ts, end_ts)
 
         # Handle multi-chunk responses (year-splitting)
         if isinstance(result, list):
