@@ -424,6 +424,141 @@ fig.show()""",
 )
 
 
+# ── Generation per Plant ─────────────────────────────────────────────────
+
+generation_per_plant_nb = nb(
+    [
+        (
+            "md",
+            """
+# Generation per Plant — ENTSO-E Examples
+
+Querying actual generation at individual generator level (document type A73).
+
+**Note:** Only generation units with ≥100 MW installed capacity are required to report.
+""",
+        ),
+        ("code", SETUP_WITH_MAPPINGS),
+        (
+            "md",
+            """
+## 1. All Generation Units — France (1 day)
+""",
+        ),
+        (
+            "code",
+            """\
+start = "2024-06-03"
+end = "2024-06-04"
+
+df = client.generation.per_plant(start, end, country="FR")
+df["fuel"] = df["psr_type"].map(PSR_TYPES)
+df.head(10)""",
+        ),
+        (
+            "code",
+            """\
+print(f"Columns: {df.columns.tolist()}")
+print(f"Unique units: {df['unit_name'].nunique()}")
+print(f"Fuel types: {df['fuel'].nunique()}")
+print(f"Time range: {df['timestamp'].min()} → {df['timestamp'].max()}")""",
+        ),
+        (
+            "md",
+            """
+## 2. Top 10 Generators by Output
+""",
+        ),
+        (
+            "code",
+            """\
+totals = (
+    df.groupby(["unit_name", "fuel"])["value"]
+    .sum()
+    .reset_index()
+    .sort_values("value", ascending=False)
+    .head(10)
+)
+
+fig = px.bar(
+    totals, x="value", y="unit_name", color="fuel",
+    orientation="h",
+    title="Top 10 Generation Units by Total Output — France",
+    labels={"value": "Total Generation (MWh)", "unit_name": ""},
+)
+fig.update_layout(yaxis={"categoryorder": "total ascending"})
+fig.show()""",
+        ),
+        (
+            "md",
+            """
+## 3. Nuclear Plants — Hourly Profiles
+""",
+        ),
+        (
+            "code",
+            """\
+df_nuclear = df[df["psr_type"] == "B14"].copy()
+
+# Pick top 5 nuclear units by total output
+top_nuclear = (
+    df_nuclear.groupby("unit_name")["value"].sum()
+    .nlargest(5).index
+)
+df_top = df_nuclear[df_nuclear["unit_name"].isin(top_nuclear)]
+
+fig = px.line(
+    df_top, x="timestamp", y="value", color="unit_name",
+    title="Top 5 Nuclear Units — Hourly Generation (France)",
+    labels={"value": "Generation (MW)", "timestamp": "", "unit_name": "Unit"},
+)
+fig.show()""",
+        ),
+        (
+            "md",
+            """
+## 4. Gas Plants — France
+""",
+        ),
+        (
+            "code",
+            """\
+df_gas = df[df["psr_type"] == "B04"].copy()
+
+fig = px.line(
+    df_gas, x="timestamp", y="value", color="unit_name",
+    title="Gas Plants — Individual Output (France)",
+    labels={"value": "Generation (MW)", "timestamp": "", "unit_name": "Plant"},
+)
+fig.show()""",
+        ),
+        (
+            "md",
+            """
+## 5. Unit Count by Fuel Type
+""",
+        ),
+        (
+            "code",
+            """\
+unit_counts = (
+    df.groupby("fuel")["unit_name"]
+    .nunique()
+    .reset_index(name="units")
+    .sort_values("units", ascending=True)
+)
+
+fig = px.bar(
+    unit_counts, x="units", y="fuel", orientation="h",
+    title="Number of Reporting Units by Fuel Type — France",
+    labels={"units": "Generation Units (≥100 MW)", "fuel": ""},
+)
+fig.show()""",
+        ),
+    ]
+)
+
+
 # ── Transmission ─────────────────────────────────────────────────────────
 
 transmission_nb = nb(
@@ -700,6 +835,7 @@ NOTEBOOKS = {
     "examples/load.ipynb": load_nb,
     "examples/prices.ipynb": prices_nb,
     "examples/generation.ipynb": generation_nb,
+    "examples/generation_per_plant.ipynb": generation_per_plant_nb,
     "examples/transmission.ipynb": transmission_nb,
     "examples/balancing.ipynb": balancing_nb,
 }

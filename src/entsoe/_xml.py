@@ -114,6 +114,16 @@ def parse_timeseries(xml_text: str) -> pd.DataFrame:
             if psr_code:
                 ts_meta["psr_type"] = psr_code
 
+            # Generation unit identifiers (per-plant responses)
+            psr = _find(mkt_psr, "PowerSystemResources")
+            if psr is not None:
+                unit_mrid = _find_text(psr, "mRID")
+                unit_name = _find_text(psr, "name")
+                if unit_mrid:
+                    ts_meta["unit_eic"] = unit_mrid
+                if unit_name:
+                    ts_meta["unit_name"] = unit_name
+
         # In/Out domain (useful for transmission)
         in_domain = _find(ts, "in_Domain.mRID")
         if in_domain is not None and in_domain.text:
