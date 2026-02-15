@@ -159,7 +159,7 @@ PROCESS_TYPES: dict[str, str] = {
     "year_ahead": "A33",
 }
 
-# PSR (Power System Resource) type codes — code → name
+# PSR (Power System Resource) type codes — ENTSO-E code → full name
 PSR_TYPES: dict[str, str] = {
     "B01": "Biomass",
     "B02": "Fossil Brown coal/Lignite",
@@ -183,6 +183,30 @@ PSR_TYPES: dict[str, str] = {
     "B20": "Other",
 }
 
+# Human-readable shorthand → ENTSO-E code
+PSR_CODES: dict[str, str] = {
+    "biomass": "B01",
+    "lignite": "B02",
+    "coal_gas": "B03",
+    "gas": "B04",
+    "hard_coal": "B05",
+    "oil": "B06",
+    "oil_shale": "B07",
+    "peat": "B08",
+    "geothermal": "B09",
+    "pumped_storage": "B10",
+    "run_of_river": "B11",
+    "hydro_reservoir": "B12",
+    "marine": "B13",
+    "nuclear": "B14",
+    "other_renewable": "B15",
+    "solar": "B16",
+    "waste": "B17",
+    "wind_offshore": "B18",
+    "wind_onshore": "B19",
+    "other": "B20",
+}
+
 # ── Reverse lookups (built once at import time) ──────────────────────────
 
 # EIC area code → ISO code
@@ -193,6 +217,9 @@ _NAME_TO_ISO: dict[str, str] = {v.lower(): k for k, v in COUNTRY_NAMES.items()}
 
 # PSR name (lowercase) → ENTSO-E code
 _PSR_NAME_TO_CODE: dict[str, str] = {v.lower(): k for k, v in PSR_TYPES.items()}
+
+# PSR shorthand (lowercase) → ENTSO-E code (merge into name lookup)
+_PSR_NAME_TO_CODE.update(PSR_CODES)
 
 
 # ── Public lookup functions ──────────────────────────────────────────────
@@ -243,10 +270,11 @@ def lookup_psr(identifier: str) -> str:
 
     Accepts any of:
     - ENTSO-E code: ``"B16"``
-    - Name: ``"Solar"``, ``"Wind Onshore"``
+    - Full name: ``"Solar"``, ``"Wind Onshore"``
+    - Shorthand: ``"solar"``, ``"wind_onshore"``, ``"gas"``
 
     Args:
-        identifier: PSR type code or name.
+        identifier: PSR type code, name, or shorthand.
 
     Returns:
         The ENTSO-E PSR type code (e.g., ``"B16"``).
@@ -263,14 +291,14 @@ def lookup_psr(identifier: str) -> str:
     if key in PSR_TYPES:
         return key
 
-    # Try name
+    # Try name or shorthand
     if raw.lower() in _PSR_NAME_TO_CODE:
         return _PSR_NAME_TO_CODE[raw.lower()]
 
     raise InvalidParameterError(
         f"Unknown PSR type: '{identifier}'. "
-        f"Available codes: {', '.join(sorted(PSR_TYPES.keys()))}. "
-        f"Available names: {', '.join(sorted(PSR_TYPES.values()))}"
+        f"Available shorthands: {', '.join(sorted(PSR_CODES.keys()))}. "
+        f"Available codes: {', '.join(sorted(PSR_TYPES.keys()))}"
     )
 
 

@@ -341,8 +341,8 @@ fig.show()""",
 start = "2024-06-03"
 end = "2024-06-06"
 
-df_solar = client.generation.actual(start, end, country="FR", psr_type="Solar")
-df_wind = client.generation.actual(start, end, country="FR", psr_type="Wind Onshore")
+df_solar = client.generation.actual(start, end, country="FR", psr_type="solar")
+df_wind = client.generation.actual(start, end, country="FR", psr_type="wind_onshore")
 
 df_ren = pd.concat([df_solar, df_wind], ignore_index=True)
 
