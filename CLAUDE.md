@@ -27,6 +27,20 @@ The GitHub Actions workflow (`.github/workflows/publish.yml`) uses OIDC trusted 
 
 Notebooks in `examples/` are **generated** — do not edit them directly.
 
-1. Edit `scripts/generate_notebooks.py`
-2. Run `uv run python scripts/generate_notebooks.py`
-3. Execute to verify: `export ENTSOE_API_KEY=... && uv run python -c "import nbformat; from nbclient import NotebookClient; nb = nbformat.read('examples/<name>.ipynb', as_version=4); NotebookClient(nb, timeout=120, kernel_name='python3').execute(); print('OK')"`
+### Workflow
+
+```bash
+# 1. Edit the notebook definitions
+#    → scripts/generate_notebooks.py
+
+# 2. Generate clean notebooks (no outputs)
+uv run python scripts/generate_notebooks.py
+
+# 3. Generate + execute (saves outputs for GitHub rendering)
+uv run python scripts/generate_notebooks.py --execute
+
+# 4. Force re-execution (even if already executed)
+uv run python scripts/generate_notebooks.py --execute --force
+```
+
+Execution is **idempotent** — notebooks with existing outputs are skipped unless `--force` is passed. Requires `ENTSOE_API_KEY` in environment.

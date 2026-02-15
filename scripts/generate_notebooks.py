@@ -840,6 +840,18 @@ NOTEBOOKS = {
     "examples/balancing.ipynb": balancing_nb,
 }
 
+def _has_outputs(path: str) -> bool:
+    """Check if a notebook already has execution outputs."""
+    try:
+        existing = nbf.read(path, as_version=4)
+    except FileNotFoundError:
+        return False
+    return any(
+        cell.cell_type == "code" and cell.outputs
+        for cell in existing.cells
+    )
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -848,7 +860,16 @@ if __name__ == "__main__":
         "--execute", action="store_true",
         help="Execute notebooks and save with outputs (requires ENTSOE_API_KEY).",
     )
+    parser.add_argument(
+        "--force", action="store_true",
+        help="Re-execute even if notebooks already have outputs.",
+    )
     args = parser.parse_args()
+
+    # Check which notebooks already have outputs before overwriting
+    already_executed = {
+        path for path in NOTEBOOKS if _has_outputs(path)
+    }
 
     for path, notebook in NOTEBOOKS.items():
         nbf.write(notebook, path)
@@ -859,6 +880,9 @@ if __name__ == "__main__":
 
         print("\nExecuting notebooks...")
         for path in NOTEBOOKS:
+            if not args.force and path in already_executed:
+                print(f"  Skipping {path} (already executed, use --force to re-run)")
+                continue
             print(f"  Executing {path}...", end=" ", flush=True)
             nb = nbf.read(path, as_version=4)
             client = NotebookClient(nb, timeout=120, kernel_name="python3")
