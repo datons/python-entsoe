@@ -35,7 +35,7 @@ SETUP = """\
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from entsoe import Client
+from entsoe import Client, country_name
 
 client = Client()"""
 
@@ -142,11 +142,11 @@ fig.show()""",
 start = "2024-06-03"
 end = "2024-06-04"
 
-countries = {"FR": "France", "DE_LU": "Germany", "ES": "Spain"}
+countries = ["FR", "DE_LU", "ES"]
 frames = []
-for code, name in countries.items():
+for code in countries:
     df = client.load.actual(start, end, country=code)
-    df["country"] = name
+    df["country"] = country_name(code)
     frames.append(df)
 
 df_multi = pd.concat(frames, ignore_index=True)
@@ -209,11 +209,11 @@ fig.show()""",
         (
             "code",
             """\
-countries = {"FR": "France", "DE_LU": "Germany/Luxembourg", "ES": "Spain", "NL": "Netherlands"}
+countries = ["FR", "DE_LU", "ES", "NL"]
 frames = []
-for code, name in countries.items():
+for code in countries:
     df = client.prices.day_ahead(start, end, country=code)
-    df["country"] = name
+    df["country"] = country_name(code)
     frames.append(df)
 
 df_multi = pd.concat(frames, ignore_index=True)
@@ -341,8 +341,8 @@ fig.show()""",
 start = "2024-06-03"
 end = "2024-06-06"
 
-df_solar = client.generation.actual(start, end, country="FR", psr_type="B16")
-df_wind = client.generation.actual(start, end, country="FR", psr_type="B19")
+df_solar = client.generation.actual(start, end, country="FR", psr_type="Solar")
+df_wind = client.generation.actual(start, end, country="FR", psr_type="Wind Onshore")
 
 df_ren = pd.concat([df_solar, df_wind], ignore_index=True)
 
@@ -646,13 +646,13 @@ fig.show()""",
 start = "2024-06-03"
 end = "2024-06-04"
 
-borders = {"DE_LU": "→ Germany", "ES": "→ Spain", "GB": "→ Great Britain", "IT_NORTH": "→ Italy (North)"}
+borders = ["DE_LU", "ES", "GB", "IT_NORTH"]
 frames = []
-for code, label in borders.items():
+for code in borders:
     df = client.transmission.crossborder_flows(
         start, end, country_from="FR", country_to=code
     )
-    df["border"] = f"FR {label}"
+    df["border"] = f"FR → {country_name(code)}"
     frames.append(df)
 
 df_borders = pd.concat(frames, ignore_index=True)
@@ -750,11 +750,11 @@ fig.show()""",
         (
             "code",
             """\
-countries = {"FR": "France", "NL": "Netherlands", "BE": "Belgium"}
+countries = ["FR", "NL", "BE"]
 frames = []
-for code, name in countries.items():
+for code in countries:
     df = client.balancing.imbalance_prices(start, end, country=code)
-    df["country"] = name
+    df["country"] = country_name(code)
     frames.append(df)
 
 df_multi = pd.concat(frames, ignore_index=True)

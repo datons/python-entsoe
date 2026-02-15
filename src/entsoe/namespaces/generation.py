@@ -5,6 +5,7 @@ from __future__ import annotations
 import pandas as pd
 
 from ._base import BaseNamespace, Timestamp
+from .._mappings import lookup_psr
 
 
 class GenerationNamespace(BaseNamespace):
@@ -29,9 +30,9 @@ class GenerationNamespace(BaseNamespace):
         Args:
             start: Period start — date string or tz-aware Timestamp.
             end: Period end — date string or tz-aware Timestamp.
-            country: Country code (e.g., "FR", "DE").
-            psr_type: Optional PSR type code (e.g., "B16" for Solar,
-                      "B19" for Wind Onshore). If None, returns all types.
+            country: Country code or name (e.g., "FR", "France").
+            psr_type: PSR type code or name (e.g., "B16" or "Solar").
+                      If None, returns all types.
 
         Returns:
             DataFrame with columns: timestamp, value (MW), psr_type.
@@ -42,7 +43,7 @@ class GenerationNamespace(BaseNamespace):
             "in_Domain": self._area(country),
         }
         if psr_type:
-            params["psrType"] = psr_type
+            params["psrType"] = lookup_psr(psr_type)
         return self._query(params, start, end)
 
     def forecast(
@@ -57,8 +58,8 @@ class GenerationNamespace(BaseNamespace):
         Args:
             start: Period start — date string or tz-aware Timestamp.
             end: Period end — date string or tz-aware Timestamp.
-            country: Country code (e.g., "FR", "DE").
-            psr_type: Optional PSR type code to filter by.
+            country: Country code or name (e.g., "FR", "France").
+            psr_type: PSR type code or name to filter by.
 
         Returns:
             DataFrame with columns: timestamp, value (MW), psr_type.
@@ -69,7 +70,7 @@ class GenerationNamespace(BaseNamespace):
             "in_Domain": self._area(country),
         }
         if psr_type:
-            params["psrType"] = psr_type
+            params["psrType"] = lookup_psr(psr_type)
         return self._query(params, start, end)
 
     def installed_capacity(
@@ -84,8 +85,8 @@ class GenerationNamespace(BaseNamespace):
         Args:
             start: Period start — date string or tz-aware Timestamp.
             end: Period end — date string or tz-aware Timestamp.
-            country: Country code (e.g., "FR", "DE").
-            psr_type: Optional PSR type code to filter by.
+            country: Country code or name (e.g., "FR", "France").
+            psr_type: PSR type code or name to filter by.
 
         Returns:
             DataFrame with columns: timestamp, value (MW), psr_type.
@@ -96,7 +97,7 @@ class GenerationNamespace(BaseNamespace):
             "in_Domain": self._area(country),
         }
         if psr_type:
-            params["psrType"] = psr_type
+            params["psrType"] = lookup_psr(psr_type)
         return self._query(params, start, end)
 
     def per_plant(
@@ -111,8 +112,8 @@ class GenerationNamespace(BaseNamespace):
         Args:
             start: Period start — date string or tz-aware Timestamp.
             end: Period end — date string or tz-aware Timestamp.
-            country: Country code (e.g., "FR", "DE").
-            psr_type: Optional PSR type code to filter by.
+            country: Country code or name (e.g., "FR", "France").
+            psr_type: PSR type code or name to filter by.
 
         Returns:
             DataFrame with columns: timestamp, value (MW), psr_type,
@@ -124,5 +125,5 @@ class GenerationNamespace(BaseNamespace):
             "in_Domain": self._area(country),
         }
         if psr_type:
-            params["psrType"] = psr_type
+            params["psrType"] = lookup_psr(psr_type)
         return self._query(params, start, end)

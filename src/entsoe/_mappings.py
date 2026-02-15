@@ -62,6 +62,68 @@ AREA_CODES: dict[str, str] = {
     "XK": "10Y1001C--00100H",
 }
 
+# ISO code → human-readable country/area name
+COUNTRY_NAMES: dict[str, str] = {
+    "AL": "Albania",
+    "AT": "Austria",
+    "BA": "Bosnia and Herzegovina",
+    "BE": "Belgium",
+    "BG": "Bulgaria",
+    "CH": "Switzerland",
+    "CZ": "Czech Republic",
+    "DE": "Germany",
+    "DE_LU": "Germany/Luxembourg",
+    "DE_AT_LU": "Germany/Austria/Luxembourg",
+    "DK": "Denmark",
+    "DK_1": "Denmark (West)",
+    "DK_2": "Denmark (East)",
+    "EE": "Estonia",
+    "ES": "Spain",
+    "FI": "Finland",
+    "FR": "France",
+    "GB": "Great Britain",
+    "GR": "Greece",
+    "HR": "Croatia",
+    "HU": "Hungary",
+    "IE": "Ireland",
+    "IE_SEM": "Ireland (SEM)",
+    "IT": "Italy",
+    "IT_NORTH": "Italy (North)",
+    "IT_CNOR": "Italy (Central North)",
+    "IT_CSUD": "Italy (Central South)",
+    "IT_SUD": "Italy (South)",
+    "IT_SICI": "Italy (Sicily)",
+    "IT_SARD": "Italy (Sardinia)",
+    "LT": "Lithuania",
+    "LU": "Luxembourg",
+    "LV": "Latvia",
+    "ME": "Montenegro",
+    "MK": "North Macedonia",
+    "MT": "Malta",
+    "NL": "Netherlands",
+    "NO": "Norway",
+    "NO_1": "Norway (South-East)",
+    "NO_2": "Norway (South-West)",
+    "NO_3": "Norway (Central)",
+    "NO_4": "Norway (North)",
+    "NO_5": "Norway (West)",
+    "PL": "Poland",
+    "PT": "Portugal",
+    "RO": "Romania",
+    "RS": "Serbia",
+    "SE": "Sweden",
+    "SE_1": "Sweden (Luleå)",
+    "SE_2": "Sweden (Sundsvall)",
+    "SE_3": "Sweden (Stockholm)",
+    "SE_4": "Sweden (Malmö)",
+    "SI": "Slovenia",
+    "SK": "Slovakia",
+    "TR": "Turkey",
+    "UA": "Ukraine",
+    "UK": "United Kingdom",
+    "XK": "Kosovo",
+}
+
 # Document type codes used in API requests
 DOCUMENT_TYPES: dict[str, str] = {
     # Load
@@ -97,7 +159,7 @@ PROCESS_TYPES: dict[str, str] = {
     "year_ahead": "A33",
 }
 
-# PSR (Power System Resource) type codes
+# PSR (Power System Resource) type codes — code → name
 PSR_TYPES: dict[str, str] = {
     "B01": "Biomass",
     "B02": "Fossil Brown coal/Lignite",
@@ -121,25 +183,144 @@ PSR_TYPES: dict[str, str] = {
     "B20": "Other",
 }
 
+# ── Reverse lookups (built once at import time) ──────────────────────────
 
-def lookup_area(country: str) -> str:
-    """Resolve a country code to its ENTSO-E EIC area code.
+# EIC area code → ISO code
+EIC_TO_ISO: dict[str, str] = {v: k for k, v in AREA_CODES.items()}
+
+# Country name (lowercase) → ISO code
+_NAME_TO_ISO: dict[str, str] = {v.lower(): k for k, v in COUNTRY_NAMES.items()}
+
+# PSR name (lowercase) → ENTSO-E code
+_PSR_NAME_TO_CODE: dict[str, str] = {v.lower(): k for k, v in PSR_TYPES.items()}
+
+
+# ── Public lookup functions ──────────────────────────────────────────────
+
+
+def lookup_area(identifier: str) -> str:
+    """Resolve a country identifier to its ENTSO-E EIC area code.
+
+    Accepts any of:
+    - ISO code: ``"FR"``, ``"DE_LU"``
+    - Country name: ``"France"``, ``"Germany/Luxembourg"``
+    - EIC code: ``"10YFR-RTE------C"``
 
     Args:
-        country: ISO country code (e.g., "FR", "DE_LU").
+        identifier: Country identifier in any supported format.
 
     Returns:
         The EIC area code string.
 
     Raises:
-        InvalidParameterError: If the country code is not recognized.
+        InvalidParameterError: If the identifier is not recognized.
     """
     from .exceptions import InvalidParameterError
 
-    code = country.upper().strip()
-    if code not in AREA_CODES:
-        raise InvalidParameterError(
-            f"Unknown country code: '{country}'. "
-            f"Available: {', '.join(sorted(AREA_CODES.keys()))}"
-        )
-    return AREA_CODES[code]
+    raw = identifier.strip()
+    key = raw.upper().replace(" ", "_")
+
+    # Try ISO code
+    if key in AREA_CODES:
+        return AREA_CODES[key]
+
+    # Try EIC code directly
+    if raw in EIC_TO_ISO:
+        return raw
+
+    # Try country name
+    if raw.lower() in _NAME_TO_ISO:
+        return AREA_CODES[_NAME_TO_ISO[raw.lower()]]
+
+    raise InvalidParameterError(
+        f"Unknown country: '{identifier}'. "
+        f"Available: {', '.join(sorted(AREA_CODES.keys()))}"
+    )
+
+
+def lookup_psr(identifier: str) -> str:
+    """Resolve a PSR type identifier to its ENTSO-E code.
+
+    Accepts any of:
+    - ENTSO-E code: ``"B16"``
+    - Name: ``"Solar"``, ``"Wind Onshore"``
+
+    Args:
+        identifier: PSR type code or name.
+
+    Returns:
+        The ENTSO-E PSR type code (e.g., ``"B16"``).
+
+    Raises:
+        InvalidParameterError: If the identifier is not recognized.
+    """
+    from .exceptions import InvalidParameterError
+
+    raw = identifier.strip()
+    key = raw.upper()
+
+    # Try code directly
+    if key in PSR_TYPES:
+        return key
+
+    # Try name
+    if raw.lower() in _PSR_NAME_TO_CODE:
+        return _PSR_NAME_TO_CODE[raw.lower()]
+
+    raise InvalidParameterError(
+        f"Unknown PSR type: '{identifier}'. "
+        f"Available codes: {', '.join(sorted(PSR_TYPES.keys()))}. "
+        f"Available names: {', '.join(sorted(PSR_TYPES.values()))}"
+    )
+
+
+def country_name(identifier: str) -> str:
+    """Get the human-readable name for a country/area.
+
+    Accepts ISO code, EIC code, or name (returned as-is).
+
+    Args:
+        identifier: Country identifier in any supported format.
+
+    Returns:
+        Human-readable country name (e.g., ``"France"``).
+
+    Raises:
+        InvalidParameterError: If the identifier is not recognized.
+    """
+    from .exceptions import InvalidParameterError
+
+    raw = identifier.strip()
+    key = raw.upper().replace(" ", "_")
+
+    # Try ISO code
+    if key in COUNTRY_NAMES:
+        return COUNTRY_NAMES[key]
+
+    # Try EIC code
+    if raw in EIC_TO_ISO:
+        return COUNTRY_NAMES.get(EIC_TO_ISO[raw], EIC_TO_ISO[raw])
+
+    # Try name (return as-is if it matches)
+    if raw.lower() in _NAME_TO_ISO:
+        return COUNTRY_NAMES[_NAME_TO_ISO[raw.lower()]]
+
+    raise InvalidParameterError(
+        f"Unknown country: '{identifier}'. "
+        f"Available: {', '.join(sorted(AREA_CODES.keys()))}"
+    )
+
+
+def psr_name(identifier: str) -> str:
+    """Get the human-readable name for a PSR type.
+
+    Accepts code or name (returned as-is).
+
+    Args:
+        identifier: PSR type code (e.g., ``"B16"``) or name.
+
+    Returns:
+        Human-readable name (e.g., ``"Solar"``).
+    """
+    code = lookup_psr(identifier)
+    return PSR_TYPES[code]

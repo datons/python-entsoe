@@ -17,7 +17,7 @@ from datetime import timedelta
 import pandas as pd
 
 from .exceptions import NoDataError
-from ._mappings import PSR_TYPES
+from ._mappings import EIC_TO_ISO, PSR_TYPES
 
 
 def _strip_ns(tag: str) -> str:
@@ -125,13 +125,13 @@ def parse_timeseries(xml_text: str) -> pd.DataFrame:
                 if unit_name:
                     ts_meta["unit_name"] = unit_name
 
-        # In/Out domain (useful for transmission)
+        # In/Out domain (useful for transmission) — resolve EIC → ISO
         in_domain = _find(ts, "in_Domain.mRID")
         if in_domain is not None and in_domain.text:
-            ts_meta["in_domain"] = in_domain.text
+            ts_meta["in_domain"] = EIC_TO_ISO.get(in_domain.text, in_domain.text)
         out_domain = _find(ts, "out_Domain.mRID")
         if out_domain is not None and out_domain.text:
-            ts_meta["out_domain"] = out_domain.text
+            ts_meta["out_domain"] = EIC_TO_ISO.get(out_domain.text, out_domain.text)
 
         # Currency and unit
         currency = _find_text(ts, "currency_Unit.name")
