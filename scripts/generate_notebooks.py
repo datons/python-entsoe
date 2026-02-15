@@ -39,14 +39,7 @@ from entsoe import Client
 
 client = Client()"""
 
-SETUP_WITH_MAPPINGS = """\
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-from entsoe import Client
-from entsoe._mappings import PSR_TYPES
-
-client = Client()"""
+SETUP_WITH_MAPPINGS = SETUP  # PSR types are now auto-resolved by the parser
 
 
 # ── Load ─────────────────────────────────────────────────────────────────
@@ -305,14 +298,13 @@ start = "2024-06-01"
 end = "2024-06-08"
 
 df_gen = client.generation.actual(start, end, country="FR")
-df_gen["fuel"] = df_gen["psr_type"].map(PSR_TYPES)
 df_gen.head()""",
         ),
         (
             "code",
             """\
 fig = px.area(
-    df_gen, x="timestamp", y="value", color="fuel",
+    df_gen, x="timestamp", y="value", color="psr_type",
     title="Generation Mix — France",
     labels={"value": "Generation (MW)", "timestamp": ""},
 )
@@ -328,11 +320,11 @@ fig.show()""",
         (
             "code",
             """\
-totals = df_gen.groupby("fuel")["value"].sum().reset_index()
+totals = df_gen.groupby("psr_type")["value"].sum().reset_index()
 totals = totals[totals["value"] > 0]
 
 fig = px.pie(
-    totals, names="fuel", values="value",
+    totals, names="psr_type", values="value",
     title="Generation Share — France, 1-8 Jun 2024",
 )
 fig.show()""",
@@ -350,15 +342,12 @@ start = "2024-06-03"
 end = "2024-06-06"
 
 df_solar = client.generation.actual(start, end, country="FR", psr_type="B16")
-df_solar["fuel"] = "Solar"
-
 df_wind = client.generation.actual(start, end, country="FR", psr_type="B19")
-df_wind["fuel"] = "Wind Onshore"
 
 df_ren = pd.concat([df_solar, df_wind], ignore_index=True)
 
 fig = px.line(
-    df_ren, x="timestamp", y="value", color="fuel",
+    df_ren, x="timestamp", y="value", color="psr_type",
     title="Solar vs Wind Onshore — France",
     labels={"value": "Generation (MW)", "timestamp": ""},
 )
@@ -374,10 +363,9 @@ fig.show()""",
             "code",
             """\
 df_forecast = client.generation.forecast(start, end, country="FR")
-df_forecast["fuel"] = df_forecast["psr_type"].map(PSR_TYPES)
 
 # Compare solar
-df_solar_fc = df_forecast[df_forecast["psr_type"] == "B16"]
+df_solar_fc = df_forecast[df_forecast["psr_type"] == "Solar"]
 
 fig = go.Figure()
 fig.add_trace(go.Scatter(
@@ -408,15 +396,14 @@ start = "2024-01-01"
 end = "2024-12-31"
 
 df_cap = client.generation.installed_capacity(start, end, country="FR")
-df_cap["fuel"] = df_cap["psr_type"].map(PSR_TYPES)
 
-latest = df_cap.sort_values("timestamp").groupby("fuel").last().reset_index()
+latest = df_cap.sort_values("timestamp").groupby("psr_type").last().reset_index()
 latest = latest[latest["value"] > 0].sort_values("value", ascending=True)
 
 fig = px.bar(
-    latest, x="value", y="fuel", orientation="h",
+    latest, x="value", y="psr_type", orientation="h",
     title="Installed Generation Capacity — France, 2024",
-    labels={"value": "Capacity (MW)", "fuel": ""},
+    labels={"value": "Capacity (MW)", "psr_type": ""},
 )
 fig.show()""",
         ),
@@ -452,7 +439,6 @@ start = "2024-06-03"
 end = "2024-06-04"
 
 df = client.generation.per_plant(start, end, country="FR")
-df["fuel"] = df["psr_type"].map(PSR_TYPES)
 df.head(10)""",
         ),
         (
@@ -460,7 +446,7 @@ df.head(10)""",
             """\
 print(f"Columns: {df.columns.tolist()}")
 print(f"Unique units: {df['unit_name'].nunique()}")
-print(f"Fuel types: {df['fuel'].nunique()}")
+print(f"Fuel types: {df['psr_type'].nunique()}")
 print(f"Time range: {df['timestamp'].min()} → {df['timestamp'].max()}")""",
         ),
         (
@@ -473,7 +459,7 @@ print(f"Time range: {df['timestamp'].min()} → {df['timestamp'].max()}")""",
             "code",
             """\
 totals = (
-    df.groupby(["unit_name", "fuel"])["value"]
+    df.groupby(["unit_name", "psr_type"])["value"]
     .sum()
     .reset_index()
     .sort_values("value", ascending=False)
@@ -481,7 +467,7 @@ totals = (
 )
 
 fig = px.bar(
-    totals, x="value", y="unit_name", color="fuel",
+    totals, x="value", y="unit_name", color="psr_type",
     orientation="h",
     title="Top 10 Generation Units by Total Output — France",
     labels={"value": "Total Generation (MWh)", "unit_name": ""},
@@ -498,7 +484,7 @@ fig.show()""",
         (
             "code",
             """\
-df_nuclear = df[df["psr_type"] == "B14"].copy()
+df_nuclear = df[df["psr_type"] == "Nuclear"].copy()
 
 # Pick top 5 nuclear units by total output
 top_nuclear = (
@@ -523,7 +509,7 @@ fig.show()""",
         (
             "code",
             """\
-df_gas = df[df["psr_type"] == "B04"].copy()
+df_gas = df[df["psr_type"] == "Fossil Gas"].copy()
 
 fig = px.line(
     df_gas, x="timestamp", y="value", color="unit_name",
@@ -542,16 +528,16 @@ fig.show()""",
             "code",
             """\
 unit_counts = (
-    df.groupby("fuel")["unit_name"]
+    df.groupby("psr_type")["unit_name"]
     .nunique()
     .reset_index(name="units")
     .sort_values("units", ascending=True)
 )
 
 fig = px.bar(
-    unit_counts, x="units", y="fuel", orientation="h",
+    unit_counts, x="units", y="psr_type", orientation="h",
     title="Number of Reporting Units by Fuel Type — France",
-    labels={"units": "Generation Units (≥100 MW)", "fuel": ""},
+    labels={"units": "Generation Units (≥100 MW)", "psr_type": ""},
 )
 fig.show()""",
         ),

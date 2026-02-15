@@ -22,13 +22,13 @@ class TestGenerationActual:
         start, end = short_range
         df = client.generation.actual(start, end, country="FR", psr_type="B16")
         assert len(df) > 0
-        assert (df["psr_type"] == "B16").all()
+        assert (df["psr_type"] == "Solar").all()
 
     def test_filter_by_wind_onshore(self, client: Client, short_range):
         start, end = short_range
         df = client.generation.actual(start, end, country="FR", psr_type="B19")
         assert len(df) > 0
-        assert (df["psr_type"] == "B19").all()
+        assert (df["psr_type"] == "Wind Onshore").all()
 
 
 class TestGenerationForecast:

@@ -17,6 +17,7 @@ from datetime import timedelta
 import pandas as pd
 
 from .exceptions import NoDataError
+from ._mappings import PSR_TYPES
 
 
 def _strip_ns(tag: str) -> str:
@@ -112,7 +113,7 @@ def parse_timeseries(xml_text: str) -> pd.DataFrame:
         if mkt_psr is not None:
             psr_code = _find_text(mkt_psr, "psrType")
             if psr_code:
-                ts_meta["psr_type"] = psr_code
+                ts_meta["psr_type"] = PSR_TYPES.get(psr_code, psr_code)
 
             # Generation unit identifiers (per-plant responses)
             psr = _find(mkt_psr, "PowerSystemResources")
