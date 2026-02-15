@@ -841,7 +841,29 @@ NOTEBOOKS = {
 }
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Generate example notebooks.")
+    parser.add_argument(
+        "--execute", action="store_true",
+        help="Execute notebooks and save with outputs (requires ENTSOE_API_KEY).",
+    )
+    args = parser.parse_args()
+
     for path, notebook in NOTEBOOKS.items():
         nbf.write(notebook, path)
         print(f"  {path} ({len(notebook.cells)} cells)")
+
+    if args.execute:
+        from nbclient import NotebookClient
+
+        print("\nExecuting notebooks...")
+        for path in NOTEBOOKS:
+            print(f"  Executing {path}...", end=" ", flush=True)
+            nb = nbf.read(path, as_version=4)
+            client = NotebookClient(nb, timeout=120, kernel_name="python3")
+            client.execute()
+            nbf.write(nb, path)
+            print("OK")
+
     print(f"\nGenerated {len(NOTEBOOKS)} notebooks.")
