@@ -61,7 +61,7 @@ class BalancingNamespace(BaseNamespace):
             DataFrame with columns:
             - timestamp: tz-aware UTC datetime
             - value: Price in EUR/MWh
-            - imbalance_price_category: Price direction code (A04, A05, etc.)
+            - imbalance_price_category: Price direction ("Down", "Up")
             - currency, price_unit: Metadata columns
         """
         area = self._area(country)

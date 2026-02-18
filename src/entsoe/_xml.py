@@ -17,7 +17,7 @@ from datetime import timedelta
 import pandas as pd
 
 from .exceptions import NoDataError
-from ._mappings import EIC_TO_ISO, PSR_TYPES
+from ._mappings import EIC_TO_ISO, PSR_TYPES, IMBALANCE_PRICE_CATEGORIES
 
 
 def _strip_ns(tag: str) -> str:
@@ -175,7 +175,10 @@ def parse_timeseries(xml_text: str) -> pd.DataFrame:
 
                 row = {"timestamp": timestamp, "value": value, **ts_meta}
                 if imbalance_category:
-                    row["imbalance_price_category"] = imbalance_category
+                    # Decode category A04 → "Down", A05 → "Up"
+                    row["imbalance_price_category"] = IMBALANCE_PRICE_CATEGORIES.get(
+                        imbalance_category, imbalance_category
+                    )
                 rows.append(row)
 
     if not rows:
