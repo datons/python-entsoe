@@ -220,6 +220,11 @@ See the [`examples/`](examples/) directory for Jupyter notebooks with plotly vis
 - [`transmission.ipynb`](examples/transmission.ipynb) — cross-border flows, bidirectional charts, NTC
 - [`balancing.ipynb`](examples/balancing.ipynb) — imbalance prices, multi-country, distribution
 
+## Documentation
+
+- [**Dimensions Reference**](docs/dimensions-reference.md) — ENTSO-E codes and their meanings (PSR types, process types, imbalance categories)
+- [**Data Availability**](docs/data-availability.md) — Known issues, geographic coverage, and API quirks
+
 ## Development
 
 ```bash
