@@ -159,10 +159,12 @@ PROCESS_TYPES: dict[str, str] = {
     "year_ahead": "A33",
 }
 
-# Imbalance price category codes — price direction
-IMBALANCE_PRICE_CATEGORIES: dict[str, str] = {
-    "A04": "Down",      # Negative imbalance (system needs less power)
-    "A05": "Up",        # Positive imbalance (system needs more power)
+# Price category codes (PriceCategoryType)
+PRICE_CATEGORIES: dict[str, str] = {
+    "A04": "Long",              # Excess balance (system long)
+    "A05": "Short",             # Insufficient balance (system short)
+    "A06": "Average bid price",
+    "A07": "Marginal bid price",
 }
 
 # PSR (Power System Resource) type codes — ENTSO-E code → full name

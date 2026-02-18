@@ -61,29 +61,31 @@ df = client.load.load_forecast("2024-01-01", "2024-01-07", country="FR")
 
 ---
 
-## Imbalance Price Categories
+## Price Categories
 
-Indicates the direction of system imbalance (used in `balancing.imbalance_prices()`).
+Indicates the price category type (used across balancing endpoints).
 
-| Code | Name | Meaning |
+| Code | Name | Used in |
 |------|------|---------|
-| A04 | Down | Negative imbalance — system has excess power, needs to reduce |
-| A05 | Up | Positive imbalance — system has power deficit, needs to increase |
+| A04 | Long | Imbalance prices — system has excess (long position) |
+| A05 | Short | Imbalance prices — system has deficit (short position) |
+| A06 | Average bid price | Contracted reserves, activation prices |
+| A07 | Marginal bid price | Activated balancing energy prices |
 
-**Important:** Same timestamps appear twice — once for each direction (up and down regulation prices).
+**Important:** For imbalance prices, the same timestamps appear twice — once for each direction (Long and Short).
 
 **Example:**
 ```python
 df = client.balancing.imbalance_prices("2024-06-01", "2024-06-02", country="FR")
 
 # Each timestamp has two rows:
-#                   timestamp  value imbalance_price_category
-# 0  2024-06-01 00:00:00+00:00    0.44                   Down
-# 1  2024-06-01 00:00:00+00:00    0.50                    Up
+#                   timestamp  value price_category
+# 0  2024-06-01 00:00:00+00:00    0.44           Long
+# 1  2024-06-01 00:00:00+00:00    0.50          Short
 
 # Filter by direction:
-df_up_reg = df[df['imbalance_price_category'] == 'Up']
-df_down_reg = df[df['imbalance_price_category'] == 'Down']
+df_long = df[df['price_category'] == 'Long']
+df_short = df[df['price_category'] == 'Short']
 ```
 
 ---
@@ -145,8 +147,8 @@ For a complete list, see the `AREA_CODES` dictionary in `src/entsoe/_mappings.py
 # Get only solar generation
 df_solar = df[df['psr_type'] == 'Solar']
 
-# Get only down-regulation imbalance prices
-df_down = df[df['imbalance_price_category'] == 'Down']
+# Get only long (excess) imbalance prices
+df_long = df[df['price_category'] == 'Long']
 ```
 
 ### 2. Unique values
@@ -164,7 +166,7 @@ print(df['reserve_type'].unique())
 df.groupby('psr_type')['value'].sum()
 
 # Average imbalance price by direction
-df.groupby('imbalance_price_category')['value'].mean()
+df.groupby('price_category')['value'].mean()
 ```
 
 ---

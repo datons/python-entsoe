@@ -7,7 +7,7 @@ license = "MIT"
 authors = [
     { name = "jsulopzs", email = "jesus.lopez@datons.com" },
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 keywords = ["entsoe", "energy", "electricity", "api", "transparency"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -41,4 +41,5 @@ dev = [
     "nbformat>=5.10.4",
     "plotly>=6.5.2",
     "pytest>=9.0.2",
+    "python-dotenv>=1.2.1",
 ]

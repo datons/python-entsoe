@@ -1,0 +1,16 @@
+{
+  "name": "python-entsoe",
+  "image": "mcr.microsoft.com/devcontainers/python:3.13",
+  "features": {
+    "ghcr.io/astral-sh/uv-devcontainer-features/uv": {}
+  },
+  "postCreateCommand": "uv sync --dev",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-toolsai.jupyter"
+      ]
+    }
+  }
+}
