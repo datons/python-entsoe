@@ -24,6 +24,15 @@ class TestImbalancePrices:
         df = client.balancing.imbalance_prices(start, end, country="FR")
         assert pd.api.types.is_numeric_dtype(df["value"])
 
+    def test_has_category_column(self, client: Client, short_range):
+        """Verify imbalance_price_category column is present to differentiate duplicate timestamps."""
+        start, end = short_range
+        df = client.balancing.imbalance_prices(start, end, country="FR")
+        assert "imbalance_price_category" in df.columns
+        assert len(df["imbalance_price_category"].unique()) > 0
+        # Typically has both A04 and A05 (up and down regulation)
+        assert df["imbalance_price_category"].notna().any()
+
     def test_belgium(self, client: Client, short_range):
         start, end = short_range
         df = client.balancing.imbalance_prices(start, end, country="BE")
