@@ -117,50 +117,19 @@ df = client.transmission.crossborder_flows(
 df = client.balancing.imbalance_prices(start, end, country="FR")
 ```
 
-## Country Codes
+## Codes & Dimensions
 
-Use standard ISO codes. Some bidding zones have specific codes:
+All ENTSO-E codes (areas, PSR types, process types, business types, price categories, etc.) are defined as structured registries in [`_mappings.py`](https://github.com/datons/python-entsoe/blob/main/src/entsoe/_mappings.py). Each entry has a `name` (DataFrame output), `slug` (programmatic identifier), and `description`.
 
-| Code | Area |
-|------|------|
-| `FR` | France |
-| `DE_LU` | Germany/Luxembourg (bidding zone) |
-| `ES` | Spain |
-| `NL` | Netherlands |
-| `BE` | Belgium |
-| `IT` | Italy |
-| `IT_NORTH` | Italy North |
-| `NO_1` .. `NO_5` | Norway zones |
-| `SE_1` .. `SE_4` | Sweden zones |
-| `DK_1`, `DK_2` | Denmark zones |
+**Country codes** — use standard ISO codes. Some bidding zones have specific codes (`DE_LU`, `IT_NORTH`, `NO_1`–`NO_5`, `SE_1`–`SE_4`, `DK_1`/`DK_2`).
 
 > **Note:** For day-ahead prices and balancing data, use `DE_LU` instead of `DE`. See [data availability notes](docs/data-availability.md) for details.
 
-Full list of 60+ supported areas in [`_mappings.py`](src/entsoe/_mappings.py).
-
-## PSR Types (Fuel Types)
-
-Use PSR codes to filter generation by fuel type:
-
-| Code | Fuel Type |
-|------|-----------|
-| `B01` | Biomass |
-| `B04` | Fossil Gas |
-| `B05` | Fossil Hard coal |
-| `B06` | Fossil Oil |
-| `B10` | Hydro Pumped Storage |
-| `B11` | Hydro Run-of-river |
-| `B12` | Hydro Water Reservoir |
-| `B14` | Nuclear |
-| `B16` | Solar |
-| `B18` | Wind Offshore |
-| `B19` | Wind Onshore |
-
-Full list in [`_mappings.py`](src/entsoe/_mappings.py). Human-readable names available via:
+**PSR types** — filter generation by fuel type with codes like `B16` (Solar) or slugs like `"solar"`:
 
 ```python
-from entsoe._mappings import PSR_TYPES
-print(PSR_TYPES["B16"])  # "Solar"
+from entsoe import PSR_TYPES
+PSR_TYPES["B16"]  # {'name': 'Solar', 'slug': 'solar', 'description': 'Solar'}
 ```
 
 ## Timestamps
@@ -222,13 +191,13 @@ See the [`examples/`](examples/) directory for Jupyter notebooks with plotly vis
 
 ## Documentation
 
-- [**Dimensions Reference**](docs/dimensions-reference.md) — ENTSO-E codes and their meanings (PSR types, process types, imbalance categories)
+- [**Code Registries**](https://github.com/datons/python-entsoe/blob/main/src/entsoe/_mappings.py) — All ENTSO-E codes and their meanings (areas, PSR types, process types, business types, price categories)
 - [**Data Availability**](docs/data-availability.md) — Known issues, geographic coverage, and API quirks
 
 ## Development
 
 ```bash
-git clone https://github.com/jsulopzs/python-entsoe.git
+git clone https://github.com/datons/python-entsoe.git
 cd python-entsoe
 uv sync
 

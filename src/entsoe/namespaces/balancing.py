@@ -7,26 +7,7 @@ from typing import Literal
 import pandas as pd
 
 from ._base import BaseNamespace, Timestamp
-
-# Process type codes for reserve types
-_RESERVE_PROCESS_TYPES = {
-    "fcr": "A52",   # Frequency Containment Reserve
-    "afrr": "A51",  # Automatic Frequency Restoration Reserve
-    "mfrr": "A47",  # Manual Frequency Restoration Reserve
-}
-
-# Business type codes for activation filtering
-_ACTIVATION_BUSINESS_TYPES = {
-    "afrr": "A96",
-    "mfrr": "A97",
-}
-
-# Display names for reserve types
-_RESERVE_DISPLAY_NAMES = {
-    "fcr": "FCR",
-    "afrr": "aFRR",
-    "mfrr": "mFRR",
-}
+from .._mappings import PROCESS_TYPES, BUSINESS_TYPES, _resolve, _name
 
 ReserveType = Literal["fcr", "afrr", "mfrr"]
 ActivationType = Literal["afrr", "mfrr"]
@@ -132,7 +113,7 @@ class BalancingNamespace(BaseNamespace):
             DE may return NoDataError for some reserve types.
         """
         area = self._area(country)
-        process_type = _RESERVE_PROCESS_TYPES[reserve_type]
+        process_type = _resolve(PROCESS_TYPES, reserve_type)
         params = {
             "documentType": "A81",
             "businessType": "B95",
@@ -141,7 +122,7 @@ class BalancingNamespace(BaseNamespace):
             "type_MarketAgreement.Type": market_agreement,
         }
         df = self._query(params, start, end)
-        df["reserve_type"] = _RESERVE_DISPLAY_NAMES[reserve_type]
+        df["reserve_type"] = _name(PROCESS_TYPES, process_type)
         return df
 
     # ── Activated balancing energy prices ─────────────────────────────────
@@ -188,8 +169,9 @@ class BalancingNamespace(BaseNamespace):
             "controlArea_Domain": area,
         }
         if reserve_type is not None:
-            params["businessType"] = _ACTIVATION_BUSINESS_TYPES[reserve_type]
-        df = self._query(params, start, end)
-        if reserve_type is not None:
-            df["reserve_type"] = _RESERVE_DISPLAY_NAMES[reserve_type]
+            params["businessType"] = _resolve(BUSINESS_TYPES, reserve_type)
+            df = self._query(params, start, end)
+            df["reserve_type"] = _name(BUSINESS_TYPES, params["businessType"])
+        else:
+            df = self._query(params, start, end)
         return df

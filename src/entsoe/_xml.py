@@ -17,7 +17,7 @@ from datetime import timedelta
 import pandas as pd
 
 from .exceptions import NoDataError
-from ._mappings import EIC_TO_ISO, PSR_TYPES, PRICE_CATEGORIES
+from ._mappings import EIC_TO_ISO, PSR_TYPES, PRICE_CATEGORIES, _name
 
 
 def _strip_ns(tag: str) -> str:
@@ -114,7 +114,7 @@ def parse_timeseries(xml_text: str) -> pd.DataFrame:
         if mkt_psr is not None:
             psr_code = _find_text(mkt_psr, "psrType")
             if psr_code:
-                ts_meta["psr_type"] = PSR_TYPES.get(psr_code, psr_code)
+                ts_meta["psr_type"] = _name(PSR_TYPES, psr_code, fallback=psr_code)
 
             # Generation unit identifiers (per-plant responses)
             psr = _find(mkt_psr, "PowerSystemResources")
@@ -175,8 +175,9 @@ def parse_timeseries(xml_text: str) -> pd.DataFrame:
 
                 row = {"timestamp": timestamp, "value": value, **ts_meta}
                 if imbalance_category:
-                    row["price_category"] = PRICE_CATEGORIES.get(
-                        imbalance_category, imbalance_category
+                    row["price_category"] = _name(
+                        PRICE_CATEGORIES, imbalance_category,
+                        fallback=imbalance_category,
                     )
                 rows.append(row)
 
