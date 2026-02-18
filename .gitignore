@@ -36,3 +36,8 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+output/
+examples/generators/
+
+# Development & testing
+random/

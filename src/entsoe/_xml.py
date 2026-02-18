@@ -68,9 +68,10 @@ def _extract_point_value(point: ET.Element) -> float | None:
     """Extract the numeric value from a Point element.
 
     Handles <quantity> (load/generation), <price.amount> (day-ahead prices),
-    and <imbalance_Price.amount> (balancing).
+    <imbalance_Price.amount> (balancing), and <activation_Price.amount>
+    (activated balancing energy prices).
     """
-    for tag in ("quantity", "price.amount", "imbalance_Price.amount"):
+    for tag in ("quantity", "price.amount", "imbalance_Price.amount", "activation_Price.amount"):
         text = _find_text(point, tag)
         if text is not None:
             return float(text)
@@ -168,10 +169,13 @@ def parse_timeseries(xml_text: str) -> pd.DataFrame:
 
                 position = int(position_text)
                 value = _extract_point_value(point)
+                imbalance_category = _find_text(point, "imbalance_Price.category")
 
                 timestamp = period_start + resolution * (position - 1)
 
                 row = {"timestamp": timestamp, "value": value, **ts_meta}
+                if imbalance_category:
+                    row["imbalance_price_category"] = imbalance_category
                 rows.append(row)
 
     if not rows:
