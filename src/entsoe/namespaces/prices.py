@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from ._base import BaseNamespace, Timestamp
+from ._base import BaseNamespace, OneOrMany, Timestamp
 
 
 class PricesNamespace(BaseNamespace):
@@ -18,23 +18,27 @@ class PricesNamespace(BaseNamespace):
         self,
         start: Timestamp,
         end: Timestamp,
-        country: str,
+        country: OneOrMany,
     ) -> pd.DataFrame:
         """Query day-ahead electricity prices.
 
         Args:
             start: Period start — date string or tz-aware Timestamp.
             end: Period end — date string or tz-aware Timestamp.
-            country: Country code (e.g., "FR", "DE").
+            country: Country code or list of codes (e.g., "FR" or ["FR", "ES"]).
+                When a list is passed, results include a ``country`` column.
 
         Returns:
             DataFrame with columns: timestamp, value (EUR/MWh),
-            currency, price_unit.
+            currency, price_unit. Multi-country queries add a ``country`` column.
         """
-        area = self._area(country)
-        params = {
-            "documentType": "A44",
-            "in_Domain": area,
-            "out_Domain": area,
-        }
-        return self._query(params, start, end)
+
+        def _params(code: str) -> dict:
+            area = self._area(code)
+            return {
+                "documentType": "A44",
+                "in_Domain": area,
+                "out_Domain": area,
+            }
+
+        return self._query_multi(_params, country, start, end)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from ._base import BaseNamespace, Timestamp
+from ._base import BaseNamespace, OneOrMany, Timestamp
 
 
 class BalancingNamespace(BaseNamespace):
@@ -19,44 +19,50 @@ class BalancingNamespace(BaseNamespace):
         self,
         start: Timestamp,
         end: Timestamp,
-        country: str,
+        country: OneOrMany,
     ) -> pd.DataFrame:
         """Query imbalance prices.
 
         Args:
             start: Period start — date string or tz-aware Timestamp.
             end: Period end — date string or tz-aware Timestamp.
-            country: Country code (e.g., "FR", "DE").
+            country: Country code or list of codes (e.g., "FR" or ["FR", "NL"]).
+                When a list is passed, results include a ``country`` column.
 
         Returns:
             DataFrame with columns: timestamp, value (EUR/MWh).
         """
-        area = self._area(country)
-        params = {
-            "documentType": "A85",
-            "controlArea_Domain": area,
-        }
-        return self._query(params, start, end)
+
+        def _params(code: str) -> dict:
+            return {
+                "documentType": "A85",
+                "controlArea_Domain": self._area(code),
+            }
+
+        return self._query_multi(_params, country, start, end)
 
     def imbalance_volumes(
         self,
         start: Timestamp,
         end: Timestamp,
-        country: str,
+        country: OneOrMany,
     ) -> pd.DataFrame:
         """Query imbalance volumes.
 
         Args:
             start: Period start — date string or tz-aware Timestamp.
             end: Period end — date string or tz-aware Timestamp.
-            country: Country code (e.g., "FR", "DE").
+            country: Country code or list of codes (e.g., "FR" or ["FR", "NL"]).
+                When a list is passed, results include a ``country`` column.
 
         Returns:
             DataFrame with columns: timestamp, value (MW).
         """
-        area = self._area(country)
-        params = {
-            "documentType": "A86",
-            "controlArea_Domain": area,
-        }
-        return self._query(params, start, end)
+
+        def _params(code: str) -> dict:
+            return {
+                "documentType": "A86",
+                "controlArea_Domain": self._area(code),
+            }
+
+        return self._query_multi(_params, country, start, end)
