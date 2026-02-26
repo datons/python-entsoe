@@ -1,5 +1,7 @@
 """Exception hierarchy for the ENTSO-E client."""
 
+from __future__ import annotations
+
 
 class ENTSOEError(Exception):
     """Base exception for all ENTSO-E API errors."""

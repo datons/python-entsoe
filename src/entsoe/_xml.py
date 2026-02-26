@@ -10,6 +10,8 @@ Handles the various document types returned by the API:
 All share the TimeSeries > Period > Point structure.
 """
 
+from __future__ import annotations
+
 import re
 import xml.etree.ElementTree as ET
 from datetime import timedelta

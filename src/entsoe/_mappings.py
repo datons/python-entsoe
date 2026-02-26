@@ -1,5 +1,7 @@
 """ENTSO-E area codes, document types, and PSR type mappings."""
 
+from __future__ import annotations
+
 # Country code (ISO 3166-1 alpha-2) → ENTSO-E EIC area code
 AREA_CODES: dict[str, str] = {
     "AL": "10YAL-KESH-----5",
