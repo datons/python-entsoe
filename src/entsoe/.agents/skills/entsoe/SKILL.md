@@ -148,9 +148,9 @@ Use shorthands with `--psr` (e.g. `--psr solar --psr wind_onshore`), or ENTSO-E 
 ## Python Library
 
 ```python
-from entsoe import Client
+from entsoe import ENTSOEClient
 
-client = Client()  # reads config file, then ENTSOE_API_KEY env var
+client = ENTSOEClient()  # reads config file, then ENTSOE_API_KEY env var
 
 # Prices
 df = client.prices.day_ahead("2024-06-01", "2024-06-08", country="FR")

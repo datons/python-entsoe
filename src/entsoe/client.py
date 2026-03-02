@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 from ._http import HttpClient
+from .cache import CacheConfig, CacheStore
 from .namespaces import (
     BalancingNamespace,
     GenerationNamespace,
@@ -14,16 +16,16 @@ from .namespaces import (
 )
 
 
-class Client:
+class ENTSOEClient:
     """ENTSO-E Transparency Platform API client.
 
     Provides typed, namespace-organized access to European electricity market data.
 
     Usage::
 
-        from entsoe import Client
+        from entsoe import ENTSOEClient
 
-        client = Client()  # reads ENTSOE_API_KEY from env
+        client = ENTSOEClient()  # reads ENTSOE_API_KEY from env
 
         # Simple — just pass date strings (default tz: Europe/Brussels)
         df = client.load.actual("2024-01-01", "2024-01-07", country="FR")
@@ -35,7 +37,10 @@ class Client:
         df = client.generation.actual(start, "2024-01-07", country="FR")
 
         # Override default timezone
-        client = Client(tz="UTC")
+        client = ENTSOEClient(tz="UTC")
+
+        # Disable cache
+        client = ENTSOEClient(cache=False)
 
     Namespaces:
         load: Actual load and load forecast.
@@ -51,6 +56,10 @@ class Client:
         self,
         api_key: str | None = None,
         tz: str = DEFAULT_TZ,
+        *,
+        cache: bool = True,
+        cache_dir: str | Path | None = None,
+        cache_recent_ttl: int = 48,
     ) -> None:
         """Initialize the client.
 
@@ -59,6 +68,9 @@ class Client:
                      the ``ENTSOE_API_KEY`` environment variable.
             tz: Default timezone for string timestamps. Defaults to
                 ``Europe/Brussels`` (CET — the ENTSO-E standard).
+            cache: Whether to enable local parquet caching. Defaults to True.
+            cache_dir: Custom cache directory. Defaults to ``~/.cache/entsoe/``.
+            cache_recent_ttl: Hours before data is considered final (default 48).
 
         Raises:
             ValueError: If no API key is found.
@@ -72,8 +84,25 @@ class Client:
 
         http = HttpClient(api_key=resolved_key)
 
-        self.load = LoadNamespace(http, tz=tz)
-        self.prices = PricesNamespace(http, tz=tz)
-        self.generation = GenerationNamespace(http, tz=tz)
-        self.transmission = TransmissionNamespace(http, tz=tz)
-        self.balancing = BalancingNamespace(http, tz=tz)
+        # Set up cache
+        cache_config = CacheConfig(
+            enabled=cache,
+            recent_ttl_hours=cache_recent_ttl,
+        )
+        if cache_dir is not None:
+            cache_config.cache_dir = Path(cache_dir)
+
+        cache_store = CacheStore(cache_config) if cache else None
+
+        self.load = LoadNamespace(http, tz=tz, cache=cache_store)
+        self.prices = PricesNamespace(http, tz=tz, cache=cache_store)
+        self.generation = GenerationNamespace(http, tz=tz, cache=cache_store)
+        self.transmission = TransmissionNamespace(http, tz=tz, cache=cache_store)
+        self.balancing = BalancingNamespace(http, tz=tz, cache=cache_store)
+
+        # Expose for CLI cache commands
+        self._cache = cache_store
+
+
+# Backward-compatible alias
+Client = ENTSOEClient
