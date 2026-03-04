@@ -40,7 +40,9 @@ class LoadNamespace(BaseNamespace):
                 "outBiddingZone_Domain": self._area(code),
             }
 
-        return self._query_multi(_params, country, start, end)
+        return self._query_multi_cached(
+            "load", "actual", _params, country, start, end,
+        )
 
     def forecast(
         self,
@@ -67,4 +69,6 @@ class LoadNamespace(BaseNamespace):
                 "outBiddingZone_Domain": self._area(code),
             }
 
-        return self._query_multi(_params, country, start, end)
+        return self._query_multi_cached(
+            "load", "forecast", _params, country, start, end,
+        )

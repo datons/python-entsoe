@@ -39,7 +39,9 @@ class BalancingNamespace(BaseNamespace):
                 "controlArea_Domain": self._area(code),
             }
 
-        return self._query_multi(_params, country, start, end)
+        return self._query_multi_cached(
+            "balancing", "imbalance_prices", _params, country, start, end,
+        )
 
     def imbalance_volumes(
         self,
@@ -65,4 +67,6 @@ class BalancingNamespace(BaseNamespace):
                 "controlArea_Domain": self._area(code),
             }
 
-        return self._query_multi(_params, country, start, end)
+        return self._query_multi_cached(
+            "balancing", "imbalance_volumes", _params, country, start, end,
+        )

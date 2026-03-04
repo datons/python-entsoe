@@ -354,3 +354,149 @@ def psr_name(identifier: str) -> str:
     """
     code = lookup_psr(identifier)
     return PSR_TYPES[code]
+
+
+# ── Border / neighbour data (for CLI --border flag) ───────────────────────
+
+# Direct interconnections between bidding zones used by ENTSO-E.
+# Each key maps to the set of zones it has a physical border with.
+NEIGHBOURS: dict[str, set[str]] = {
+    "ES": {"FR", "PT"},
+    "FR": {"ES", "BE", "CH", "DE_LU", "GB", "IT_NORTH"},
+    "PT": {"ES"},
+    "BE": {"FR", "NL", "DE_LU", "GB"},
+    "NL": {"BE", "DE_LU", "GB", "NO_2", "DK_1"},
+    "DE_LU": {"FR", "BE", "NL", "AT", "CH", "CZ", "DK_1", "DK_2", "PL", "SE_4", "NO_2"},
+    "AT": {"DE_LU", "CH", "CZ", "HU", "SI", "IT_NORTH"},
+    "CH": {"FR", "DE_LU", "AT", "IT_NORTH"},
+    "IT_NORTH": {"FR", "CH", "AT", "SI"},
+    "GB": {"FR", "BE", "NL", "IE_SEM", "NO_2"},
+    "IE_SEM": {"GB"},
+    "DK_1": {"DE_LU", "NL", "NO_2", "SE_3", "DK_2"},
+    "DK_2": {"DE_LU", "DK_1", "SE_4"},
+    "NO_1": {"NO_2", "NO_3", "NO_5", "SE_3"},
+    "NO_2": {"NO_1", "NO_5", "NL", "DK_1", "DE_LU", "GB"},
+    "NO_3": {"NO_1", "NO_4", "NO_5", "SE_2"},
+    "NO_4": {"NO_3", "SE_1", "SE_2", "FI"},
+    "NO_5": {"NO_1", "NO_2", "NO_3"},
+    "SE_1": {"NO_4", "SE_2", "FI"},
+    "SE_2": {"NO_3", "NO_4", "SE_1", "SE_3"},
+    "SE_3": {"NO_1", "DK_1", "SE_2", "SE_4", "FI"},
+    "SE_4": {"DE_LU", "DK_2", "SE_3", "PL", "LT"},
+    "FI": {"NO_4", "SE_1", "SE_3", "EE"},
+    "EE": {"FI", "LV"},
+    "LV": {"EE", "LT"},
+    "LT": {"LV", "SE_4", "PL"},
+    "PL": {"DE_LU", "CZ", "SK", "LT", "SE_4"},
+    "CZ": {"DE_LU", "AT", "PL", "SK"},
+    "SK": {"CZ", "PL", "HU"},
+    "HU": {"AT", "SK", "RO", "HR", "SI", "RS"},
+    "SI": {"AT", "IT_NORTH", "HU", "HR"},
+    "HR": {"HU", "SI", "RS", "BA"},
+    "RS": {"HU", "HR", "BA", "RO", "BG", "MK", "ME", "AL"},
+    "BA": {"HR", "RS", "ME"},
+    "RO": {"HU", "RS", "BG"},
+    "BG": {"RO", "RS", "MK", "GR", "TR"},
+    "MK": {"RS", "BG", "GR", "AL"},
+    "GR": {"BG", "MK", "AL", "IT_SUD", "TR"},
+    "AL": {"RS", "MK", "GR", "ME"},
+    "ME": {"RS", "BA", "AL"},
+    "TR": {"BG", "GR"},
+}
+
+# Named border groups for convenient CLI usage.
+# ── Border parsing (library-level) ────────────────────────────────────────
+
+
+def parse_borders(specs: str | list[str]) -> list[tuple[str, str]]:
+    """Parse border specifications into deduplicated (from, to) pairs.
+
+    Supported formats:
+
+    - ``"ES-FR"``          — single border
+    - ``"ES-FR,ES-PT"``    — comma-separated within a string
+    - ``["ES-*", "FR-*"]`` — list with wildcards (all neighbours)
+    - ``"iberian"``        — named group
+
+    Deduplicates pairs while preserving insertion order, so
+    ``"ES-*,FR-*"`` won't produce ``(ES, FR)`` and ``(FR, ES)`` twice
+    if both wildcards expand to include each other.
+
+    Args:
+        specs: A single spec string or list of spec strings.
+
+    Returns:
+        Deduplicated list of ``(country_from, country_to)`` tuples.
+
+    Raises:
+        InvalidParameterError: On unknown country or invalid spec format.
+    """
+    from .exceptions import InvalidParameterError
+
+    if isinstance(specs, str):
+        specs = [specs]
+
+    flat = [v.strip() for raw in specs for v in raw.split(",") if v.strip()]
+    seen: set[tuple[str, str]] = set()
+    pairs: list[tuple[str, str]] = []
+
+    def _add(pair: tuple[str, str]) -> None:
+        if pair not in seen:
+            seen.add(pair)
+            pairs.append(pair)
+
+    for spec in flat:
+        low = spec.lower()
+
+        # Named group
+        if low in BORDER_GROUPS:
+            for p in BORDER_GROUPS[low]:
+                _add(p)
+            continue
+
+        # Pair: A-B or A-*
+        if "-" in spec:
+            parts = spec.split("-", 1)
+            a, b = parts[0].strip().upper(), parts[1].strip().upper()
+            if b == "*":
+                if a not in NEIGHBOURS:
+                    raise InvalidParameterError(
+                        f"No known neighbours for '{a}'. "
+                        f"Available: {', '.join(sorted(NEIGHBOURS.keys()))}"
+                    )
+                for n in sorted(NEIGHBOURS[a]):
+                    _add((a, n))
+            else:
+                _add((a, b))
+            continue
+
+        raise InvalidParameterError(
+            f"Invalid border spec '{spec}'. Use A-B, A-*, or a group name "
+            f"({', '.join(sorted(BORDER_GROUPS.keys()))})."
+        )
+
+    return pairs
+
+
+BORDER_GROUPS: dict[str, list[tuple[str, str]]] = {
+    "iberian": [("ES", "FR"), ("ES", "PT"), ("PT", "ES"), ("FR", "ES")],
+    "nordic": [
+        ("NO_1", "NO_2"), ("NO_1", "NO_3"), ("NO_1", "NO_5"), ("NO_1", "SE_3"),
+        ("NO_2", "NO_1"), ("NO_2", "NO_5"), ("NO_2", "NL"), ("NO_2", "DK_1"), ("NO_2", "DE_LU"), ("NO_2", "GB"),
+        ("NO_3", "NO_1"), ("NO_3", "NO_4"), ("NO_3", "NO_5"), ("NO_3", "SE_2"),
+        ("NO_4", "NO_3"), ("NO_4", "SE_1"), ("NO_4", "SE_2"), ("NO_4", "FI"),
+        ("NO_5", "NO_1"), ("NO_5", "NO_2"), ("NO_5", "NO_3"),
+        ("SE_1", "NO_4"), ("SE_1", "SE_2"), ("SE_1", "FI"),
+        ("SE_2", "NO_3"), ("SE_2", "NO_4"), ("SE_2", "SE_1"), ("SE_2", "SE_3"),
+        ("SE_3", "NO_1"), ("SE_3", "DK_1"), ("SE_3", "SE_2"), ("SE_3", "SE_4"), ("SE_3", "FI"),
+        ("SE_4", "DE_LU"), ("SE_4", "DK_2"), ("SE_4", "SE_3"), ("SE_4", "PL"), ("SE_4", "LT"),
+        ("DK_1", "DK_2"), ("DK_1", "DE_LU"), ("DK_1", "NL"), ("DK_1", "NO_2"), ("DK_1", "SE_3"),
+        ("DK_2", "DK_1"), ("DK_2", "DE_LU"), ("DK_2", "SE_4"),
+        ("FI", "NO_4"), ("FI", "SE_1"), ("FI", "SE_3"), ("FI", "EE"),
+    ],
+    "baltic": [
+        ("EE", "FI"), ("EE", "LV"),
+        ("LV", "EE"), ("LV", "LT"),
+        ("LT", "LV"), ("LT", "SE_4"), ("LT", "PL"),
+    ],
+}

@@ -29,8 +29,8 @@ class PricesNamespace(BaseNamespace):
                 When a list is passed, results include a ``country`` column.
 
         Returns:
-            DataFrame with columns: timestamp, value (EUR/MWh),
-            currency, price_unit. Multi-country queries add a ``country`` column.
+            DataFrame with columns: timestamp, value (EUR/MWh).
+            Multi-country queries add a ``country`` column.
         """
 
         def _params(code: str) -> dict:
@@ -41,4 +41,6 @@ class PricesNamespace(BaseNamespace):
                 "out_Domain": area,
             }
 
-        return self._query_multi(_params, country, start, end)
+        return self._query_multi_cached(
+            "prices", "day_ahead", _params, country, start, end,
+        )
