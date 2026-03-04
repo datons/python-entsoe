@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.0](https://github.com/datons/python-entsoe/compare/python-entsoe-v0.5.0...python-entsoe-v0.6.0) (2026-03-04)
+
+
+### Features
+
+* add built-in data catalog with CLI and Python API ([987bb18](https://github.com/datons/python-entsoe/commit/987bb181f0d1b6a8d18578b25902b77c7029ac6f))
+* migrate catalog from hardcoded Python to YAML-backed manager ([dcc35f7](https://github.com/datons/python-entsoe/commit/dcc35f7aa6359f49ef9f870d942c6d860c319597))
+
+
+### Bug Fixes
+
+* update skill with correct exec syntax and Python-first approach ([bd6dca7](https://github.com/datons/python-entsoe/commit/bd6dca7a9a8ac74c0f855719cc660a93a918eaf4))
+
 ## [0.5.0](https://github.com/datons/python-entsoe/compare/python-entsoe-v0.4.2...python-entsoe-v0.5.0) (2026-03-04)
 
 
