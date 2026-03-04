@@ -38,6 +38,7 @@ from entsoe.cli.transmission import transmission_app  # noqa: E402
 from entsoe.cli.balancing import balancing_app  # noqa: E402
 from entsoe.cli.config_cmd import config_app  # noqa: E402
 from entsoe.cli.cache_cmd import cache_app  # noqa: E402
+from entsoe.cli.catalog_cmd import catalog_app  # noqa: E402
 
 app.add_typer(prices_app, name="prices", help="Day-ahead electricity prices")
 app.add_typer(load_app, name="load", help="Actual load and load forecasts")
@@ -46,6 +47,7 @@ app.add_typer(transmission_app, name="transmission", help="Cross-border flows an
 app.add_typer(balancing_app, name="balancing", help="Imbalance prices and volumes")
 app.add_typer(config_app, name="config", help="Configuration management")
 app.add_typer(cache_app, name="cache", help="Cache management (status, clear)")
+app.add_typer(catalog_app, name="catalog", help="Browse available data, countries, PSR types, and borders")
 
 
 def main() -> None:
