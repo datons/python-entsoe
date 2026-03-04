@@ -399,6 +399,7 @@ NEIGHBOURS: dict[str, set[str]] = {
     "BG": {"RO", "RS", "MK", "GR", "TR"},
     "MK": {"RS", "BG", "GR", "AL"},
     "GR": {"BG", "MK", "AL", "IT_SUD", "TR"},
+    "IT_SUD": {"GR"},
     "AL": {"RS", "MK", "GR", "ME"},
     "ME": {"RS", "BA", "AL"},
     "TR": {"BG", "GR"},

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from ._http import HttpClient
 from .cache import CacheConfig, CacheStore
+from .catalog_manager import ENTSOECatalogManager
 from .namespaces import (
     BalancingNamespace,
     GenerationNamespace,
@@ -99,6 +100,8 @@ class ENTSOEClient:
         self.generation = GenerationNamespace(http, tz=tz, cache=cache_store)
         self.transmission = TransmissionNamespace(http, tz=tz, cache=cache_store)
         self.balancing = BalancingNamespace(http, tz=tz, cache=cache_store)
+
+        self.catalog = ENTSOECatalogManager(self)
 
         # Expose for CLI cache commands
         self._cache = cache_store
