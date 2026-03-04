@@ -5,7 +5,7 @@ description = "Python client for the ENTSO-E Transparency Platform API"
 readme = "README.md"
 license = "MIT"
 authors = [
-    { name = "Jesús López", email = "jesus.lopez@datons.ai" },
+    { name = "Jesús López", email = "jesus.lopez@datons.com" },
 ]
 requires-python = ">=3.10"
 keywords = ["entsoe", "energy", "electricity", "api", "transparency"]
