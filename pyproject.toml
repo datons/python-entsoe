@@ -5,7 +5,7 @@ description = "Python client for the ENTSO-E Transparency Platform API"
 readme = "README.md"
 license = "MIT"
 authors = [
-    { name = "jsulopzs", email = "jesus.lopez@datons.com" },
+    { name = "Jesús López", email = "jesus.lopez@datons.ai" },
 ]
 requires-python = ">=3.10"
 keywords = ["entsoe", "energy", "electricity", "api", "transparency"]
@@ -32,7 +32,10 @@ dependencies = [
 entsoe = "entsoe.cli:app"
 
 [project.urls]
+Homepage = "https://github.com/datons/python-entsoe"
 Repository = "https://github.com/datons/python-entsoe"
+Issues = "https://github.com/datons/python-entsoe/issues"
+Changelog = "https://github.com/datons/python-entsoe/releases"
 
 [build-system]
 requires = ["hatchling"]
