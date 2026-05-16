@@ -22,7 +22,6 @@ classifiers = [
 ]
 dependencies = [
     "pandas>=2.0",
-    "pyyaml>=6.0",
     "requests>=2.28",
     "typer>=0.9",
     "rich>=13.0",
@@ -47,9 +46,6 @@ packages = ["src/entsoe"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = [
-    "integration: tests that hit real APIs (deselect with -m 'not integration')",
-]
 
 [dependency-groups]
 dev = [
