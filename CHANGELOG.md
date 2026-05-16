@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/datons/python-entsoe/compare/python-entsoe-v0.6.0...python-entsoe-v0.6.1) (2026-05-16)
+
+
+### Bug Fixes
+
+* restore catalog imports broken by incomplete refactor in dcc35f7 ([74c0814](https://github.com/datons/python-entsoe/commit/74c0814bbdd3bd8d43981e77a1ab573ddf80a483))
+
 ## [0.6.0](https://github.com/datons/python-entsoe/compare/python-entsoe-v0.5.0...python-entsoe-v0.6.0) (2026-03-04)
 
 
