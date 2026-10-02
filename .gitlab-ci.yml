@@ -1,0 +1,22 @@
+stages:
+  - build
+  - publish
+
+default:
+  image: ghcr.io/astral-sh/uv:python3.13-bookworm
+
+build:
+  stage: build
+  script:
+    - uv build --no-sources
+  artifacts:
+    paths:
+      - dist/
+
+publish:
+  stage: publish
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+/'
+  script:
+    - uv build --no-sources
+    - uv publish --publish-url "$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/pypi" --check-url "$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/pypi/simple" --username gitlab-ci-token --password "$CI_JOB_TOKEN"
