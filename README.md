@@ -223,7 +223,7 @@ See the [`examples/`](examples/) directory for Jupyter notebooks with plotly vis
 ## Development
 
 ```bash
-git clone https://github.com/jsulopzs/python-entsoe.git
+git clone git@gitlab.com:datons.com/libraries/python-entsoe.git
 cd python-entsoe
 uv sync
 

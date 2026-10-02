@@ -9,19 +9,19 @@ Python client for the ENTSO-E Transparency Platform API.
 - Run scripts: `uv run python <script>`
 - Run tests: `uv run pytest`
 
-## PyPI Publishing
+## Publishing
 
-Publishing is **tag-based only**. Pushing to `main` does NOT trigger a release.
+The repo lives in GitLab (`datons.com/libraries/python-entsoe`, private). Publishing is **tag-based only**: pushing to `main` does NOT release. The CI publishes to the `datons.com/libraries` package registry, which `esios` and the other services consume through the `datons-libraries` index.
 
 ```bash
 # 1. Bump version in pyproject.toml
 # 2. Commit the version bump
 # 3. Tag and push
-git tag v0.3.0
+git tag v0.6.2
 git push origin main --tags
 ```
 
-The GitHub Actions workflow (`.github/workflows/publish.yml`) uses OIDC trusted publishing — no tokens needed.
+The public GitHub/PyPI copy is no longer maintained.
 
 ## Example Notebooks
 

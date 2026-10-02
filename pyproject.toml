@@ -32,10 +32,10 @@ dependencies = [
 entsoe = "entsoe.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/datons/python-entsoe"
-Repository = "https://github.com/datons/python-entsoe"
-Issues = "https://github.com/datons/python-entsoe/issues"
-Changelog = "https://github.com/datons/python-entsoe/releases"
+Homepage = "https://gitlab.com/datons.com/libraries/python-entsoe"
+Repository = "https://gitlab.com/datons.com/libraries/python-entsoe"
+Issues = "https://gitlab.com/datons.com/libraries/python-entsoe/-/issues"
+Changelog = "https://gitlab.com/datons.com/libraries/python-entsoe/-/releases"
 
 [build-system]
 requires = ["hatchling"]
