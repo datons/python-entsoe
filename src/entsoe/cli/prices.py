@@ -18,6 +18,7 @@ def day_ahead(
     end: Optional[str] = typer.Option(None, "--end", "-e", help="End date (YYYY-MM-DD)"),
     period: Optional[str] = typer.Option(None, "--period", "-P", help="Period shorthand: today, yesterday, week, month, ytd, <N>d"),
     country: list[str] = typer.Option(..., "--country", "-c", help="Country code(s), comma-separated or repeated (e.g. ES,FR,DE_LU)"),
+    sequence: int = typer.Option(1, "--sequence", help="Auction: 1 = SDAC (default), 2 = EXAA (DE_LU, AT)"),
     format: str = typer.Option("table", "--format", "-f", help="Output format: table, csv, json"),
     output_path: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
     api_key: Optional[str] = typer.Option(None, "--api-key", help="ENTSO-E API key"),
@@ -28,7 +29,7 @@ def day_ahead(
     s, e = resolve_dates(start, end, period)
     client = get_client(api_key)
     countries = resolve_many_required(country)
-    df = client.prices.day_ahead(s, e, country=countries)
+    df = client.prices.day_ahead(s, e, country=countries, sequence=sequence)
     output(df, format, title="Day-Ahead Prices", output_path=output_path)
 
 

@@ -6,7 +6,7 @@ published (~48h), so caching is safe and enabled by default.
 
 Storage layout::
 
-    {cache_dir}/
+    {cache_dir}/v{CACHE_LAYOUT_VERSION}/
     ├── prices/day_ahead/{ES,FR,...}/data.parquet
     ├── load/{actual,forecast}/{ES,FR,...}/data.parquet
     ├── generation/{actual,forecast,capacity}/{ES,...}/data.parquet
@@ -17,6 +17,9 @@ Storage layout::
 Each partition stores a single wide-format parquet file: the DatetimeIndex
 holds timestamps, and columns are values (e.g. "value", or per-type
 columns like "solar", "wind_onshore").
+
+The version directory changes whenever cached values from earlier releases
+are known to be wrong; data from older layouts is removed on first use.
 
 Gap detection works per-column: requesting specific columns checks whether
 those columns have data for the requested range, not whether any column does.
@@ -41,6 +44,13 @@ logger = logging.getLogger("entsoe")
 _DEFAULT_CACHE_DIR = Path(
     os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")
 ) / "entsoe"
+
+# Bumped when previously cached values are known to be wrong.
+# v2 (0.6.2): A03 curves lost their omitted points; day-ahead mixed auctions.
+CACHE_LAYOUT_VERSION = 2
+
+# Domain directories written by the unversioned (<= 0.6.1) layout.
+_LEGACY_DOMAINS = ("prices", "load", "generation", "transmission", "balancing")
 
 # Data older than this (hours) is considered final and won't be re-fetched
 _DEFAULT_RECENT_TTL_HOURS = 48
@@ -71,16 +81,37 @@ class CacheStore:
 
     def __init__(self, config: CacheConfig):
         self.config = config
+        self._purge_stale_layouts()
+
+    @property
+    def root(self) -> Path:
+        """Directory holding the current cache layout."""
+        return self.config.cache_dir / f"v{CACHE_LAYOUT_VERSION}"
+
+    def _purge_stale_layouts(self) -> None:
+        """Delete data cached by older layouts, which may hold wrong values."""
+        base = self.config.cache_dir
+        if not base.is_dir():
+            return
+        stale = [base / d for d in _LEGACY_DOMAINS]
+        stale += [
+            p for p in base.glob("v*")
+            if p.name[1:].isdigit() and int(p.name[1:]) < CACHE_LAYOUT_VERSION
+        ]
+        for path in stale:
+            if path.is_dir():
+                logger.info("Removing outdated ENTSO-E cache: %s", path)
+                shutil.rmtree(path, ignore_errors=True)
 
     # -- Path resolution -------------------------------------------------------
 
     def _parquet_path(self, domain: str, topic: str, partition: str) -> Path:
-        """Data file: {cache_dir}/{domain}/{topic}/{partition}/data.parquet"""
-        return self.config.cache_dir / domain / topic / partition / "data.parquet"
+        """Data file: {root}/{domain}/{topic}/{partition}/data.parquet"""
+        return self.root / domain / topic / partition / "data.parquet"
 
     def _meta_path(self, domain: str, topic: str, partition: str) -> Path:
-        """Metadata file: {cache_dir}/{domain}/{topic}/{partition}/meta.json"""
-        return self.config.cache_dir / domain / topic / partition / "meta.json"
+        """Metadata file: {root}/{domain}/{topic}/{partition}/meta.json"""
+        return self.root / domain / topic / partition / "meta.json"
 
     # -- Data Read / Write -----------------------------------------------------
 
@@ -291,13 +322,13 @@ class CacheStore:
         count = 0
 
         if domain and topic and partition:
-            target = self.config.cache_dir / domain / topic / partition
+            target = self.root / domain / topic / partition
         elif domain and topic:
-            target = self.config.cache_dir / domain / topic
+            target = self.root / domain / topic
         elif domain:
-            target = self.config.cache_dir / domain
+            target = self.root / domain
         else:
-            target = self.config.cache_dir
+            target = self.root
 
         if target.exists():
             count = sum(1 for f in target.rglob("*") if f.is_file())
@@ -307,7 +338,7 @@ class CacheStore:
 
     def status(self) -> dict:
         """Return cache statistics."""
-        cache_dir = self.config.cache_dir
+        cache_dir = self.root
         if not cache_dir.exists():
             return {"path": str(cache_dir), "files": 0, "size_mb": 0.0, "domains": {}}
 

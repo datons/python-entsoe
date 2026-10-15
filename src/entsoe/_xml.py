@@ -15,6 +15,7 @@ from __future__ import annotations
 import re
 import xml.etree.ElementTree as ET
 from datetime import timedelta
+from typing import Callable
 
 import pandas as pd
 
@@ -79,11 +80,41 @@ def _extract_point_value(point: ET.Element) -> float | None:
     return None
 
 
-def parse_timeseries(xml_text: str) -> pd.DataFrame:
+#: Element holding the sequence of a TimeSeries within a document, e.g. the
+#: SDAC (1) and EXAA (2) day-ahead auctions both published for DE_LU and AT.
+SEQUENCE_TAG = "classificationSequence_AttributeInstanceComponent.position"
+
+
+def timeseries_sequence(ts: ET.Element) -> int | None:
+    """Return the classification sequence of a TimeSeries, or None if absent."""
+    for el in ts.iter():
+        if _strip_ns(el.tag) == SEQUENCE_TAG and el.text:
+            return int(el.text)
+    return None
+
+
+def timeseries_contract_type(ts: ET.Element) -> str | None:
+    """Return the contract_MarketAgreement.type of a TimeSeries (A01 daily, A07 intraday)."""
+    return _find_text(ts, "contract_MarketAgreement.type")
+
+
+def parse_timeseries(
+    xml_text: str,
+    ts_filter: Callable[[ET.Element], bool] | None = None,
+) -> pd.DataFrame:
     """Parse an ENTSO-E XML response into a DataFrame.
 
     Handles multiple TimeSeries (e.g., generation per type) and multiple
     Periods within each TimeSeries (e.g., multi-day responses).
+
+    Points omitted from a curveType A03 (variable-sized block) Period carry
+    the previous point's value, so they are filled in. TimeSeries the API
+    repeats verbatim produce duplicate rows, which are dropped.
+
+    Args:
+        xml_text: Raw XML response.
+        ts_filter: Optional predicate on each TimeSeries element; series for
+            which it returns False are skipped.
 
     Returns a DataFrame with columns:
     - timestamp: tz-aware UTC datetime
@@ -107,6 +138,9 @@ def parse_timeseries(xml_text: str) -> pd.DataFrame:
     rows: list[dict] = []
 
     for ts in timeseries_list:
+        if ts_filter is not None and not ts_filter(ts):
+            continue
+
         # Extract TimeSeries metadata
         ts_meta: dict = {}
 
@@ -163,23 +197,38 @@ def parse_timeseries(xml_text: str) -> pd.DataFrame:
             period_start = pd.Timestamp(start_text)
             resolution = _parse_resolution(resolution_text)
 
+            values: dict[int, float | None] = {}
             for point in _findall(period, "Point"):
                 position_text = _find_text(point, "position")
                 if position_text is None:
                     continue
+                values[int(position_text)] = _extract_point_value(point)
 
-                position = int(position_text)
-                value = _extract_point_value(point)
+            if not values:
+                continue
 
+            positions = sorted(values)
+            if _find_text(ts, "curveType") == "A03":
+                end_text = _find_text(time_interval, "end")
+                if end_text is not None:
+                    n_slots = int((pd.Timestamp(end_text) - period_start) / resolution)
+                else:
+                    n_slots = positions[-1]
+                filled: dict[int, float | None] = {}
+                last = None
+                for pos in range(positions[0], max(n_slots, positions[-1]) + 1):
+                    last = values.get(pos, last)
+                    filled[pos] = last
+                values, positions = filled, list(filled)
+
+            for position in positions:
                 timestamp = period_start + resolution * (position - 1)
-
-                row = {"timestamp": timestamp, "value": value, **ts_meta}
-                rows.append(row)
+                rows.append({"timestamp": timestamp, "value": values[position], **ts_meta})
 
     if not rows:
         raise NoDataError()
 
-    df = pd.DataFrame(rows)
+    df = pd.DataFrame(rows).drop_duplicates()
     df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
     df = df.sort_values("timestamp").reset_index(drop=True)
     return df

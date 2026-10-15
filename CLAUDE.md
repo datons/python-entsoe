@@ -21,7 +21,11 @@ git tag v0.6.2
 git push origin main --tags
 ```
 
-The public GitHub/PyPI copy is no longer maintained.
+Public users install from PyPI, so a fix that matters to them is also released there: push `main` and the same tag to the `github` remote. `.github/workflows/publish.yml` builds and publishes on `v*` tags through PyPI trusted publishing (no token). GitLab stays the source of truth.
+
+```bash
+git push github main --tags
+```
 
 ## Example Notebooks
 

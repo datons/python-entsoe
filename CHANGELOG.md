@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.6.2](https://gitlab.com/datons.com/libraries/python-entsoe/-/tags/v0.6.2) (2026-10-15)
+
+
+### Bug Fixes
+
+* **prices:** `day_ahead` mixed the SDAC and EXAA auctions for DE_LU and AT, and the intraday auctions for ES, returning several prices per timestamp. It now returns SDAC; `sequence=2` returns EXAA (CLI: `--sequence 2`).
+* **parser:** points omitted from A03 (variable-sized block) curves are filled with the previous value, so no interval is lost. Affects every endpoint.
+* **parser:** TimeSeries that the API repeats verbatim no longer produce duplicate rows.
+* **cache:** the cache moves to a versioned layout (`~/.cache/entsoe/v2/`). Data cached by earlier versions, which may hold the errors above, is deleted on first use and downloaded again.
+
 ## [0.6.1](https://github.com/datons/python-entsoe/compare/python-entsoe-v0.6.0...python-entsoe-v0.6.1) (2026-05-16)
 
 

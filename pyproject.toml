@@ -1,6 +1,6 @@
 [project]
 name = "python-entsoe"
-version = "0.6.1"
+version = "0.6.2"
 description = "Python client for the ENTSO-E Transparency Platform API"
 readme = "README.md"
 license = "MIT"

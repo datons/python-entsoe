@@ -65,11 +65,14 @@ df = client.load.forecast(start, end, country="FR")
 
 | Method | Description | Parameters |
 |--------|-------------|------------|
-| `day_ahead(start, end, country)` | Day-ahead market prices (EUR/MWh) | `country`: ISO code |
+| `day_ahead(start, end, country, sequence=1)` | Day-ahead market prices (EUR/MWh) | `country`: ISO code; `sequence`: `1` SDAC, `2` EXAA |
 
 ```python
 df = client.prices.day_ahead(start, end, country="FR")
 # Returns: timestamp, value, currency, price_unit
+
+# DE_LU and AT also publish the separate EXAA auction (10:15 CET)
+exaa = client.prices.day_ahead(start, end, country="DE_LU", sequence=2)
 ```
 
 ### `client.generation`

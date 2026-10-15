@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Callable, Union
+from typing import TYPE_CHECKING, Callable, Optional, Union
 
 import pandas as pd
 
@@ -11,6 +11,8 @@ from ..exceptions import InvalidParameterError, NoDataError
 from .._mappings import country_name, lookup_area
 
 if TYPE_CHECKING:
+    import xml.etree.ElementTree as ET
+
     from .._http import HttpClient
     from ..cache import CacheStore
 
@@ -21,6 +23,9 @@ Timestamp = Union[str, pd.Timestamp]
 
 #: Parameters that accept a single value or a list.
 OneOrMany = Union[str, list[str]]
+
+#: Predicate deciding which TimeSeries of a response to keep.
+TimeSeriesFilter = Optional[Callable[["ET.Element"], bool]]
 
 
 class BaseNamespace:
@@ -61,6 +66,8 @@ class BaseNamespace:
         params: dict,
         start: Timestamp,
         end: Timestamp,
+        *,
+        ts_filter: TimeSeriesFilter = None,
     ) -> pd.DataFrame:
         """Execute a query and parse the XML response into a DataFrame."""
         from .._xml import parse_timeseries
@@ -71,10 +78,10 @@ class BaseNamespace:
 
         # Handle multi-chunk responses (year-splitting)
         if isinstance(result, list):
-            dfs = [parse_timeseries(xml) for xml in result]
+            dfs = [parse_timeseries(xml, ts_filter) for xml in result]
             return pd.concat(dfs, ignore_index=True).sort_values("timestamp").reset_index(drop=True)
 
-        return parse_timeseries(result)
+        return parse_timeseries(result, ts_filter)
 
     def _query_multi(
         self,
@@ -85,6 +92,7 @@ class BaseNamespace:
         *,
         label_fn: Callable[[str], str] = country_name,
         label_col: str = "country",
+        ts_filter: TimeSeriesFilter = None,
     ) -> pd.DataFrame:
         """Execute a query for one or many values, concatenating results.
 
@@ -110,11 +118,11 @@ class BaseNamespace:
             queries with an additional label column.
         """
         if isinstance(values, str):
-            return self._query(build_params(values), start, end)
+            return self._query(build_params(values), start, end, ts_filter=ts_filter)
 
         frames = []
         for val in values:
-            df = self._query(build_params(val), start, end)
+            df = self._query(build_params(val), start, end, ts_filter=ts_filter)
             df[label_col] = label_fn(val)
             frames.append(df)
         return pd.concat(frames, ignore_index=True)
@@ -134,6 +142,7 @@ class BaseNamespace:
         *,
         pivot_col: str | None = None,
         value_col: str = "value",
+        ts_filter: TimeSeriesFilter = None,
     ) -> pd.DataFrame:
         """Execute a query with parquet cache support.
 
@@ -174,7 +183,7 @@ class BaseNamespace:
             raise InvalidParameterError("start must be before end.")
 
         if self._cache is None:
-            return self._query(params, start_ts, end_ts)
+            return self._query(params, start_ts, end_ts, ts_filter=ts_filter)
 
         # 1. Read cached wide data
         cached_wide = self._cache.read(domain, topic, partition, start_ts, end_ts)
@@ -225,7 +234,7 @@ class BaseNamespace:
         gap_meta: dict = {}
         for gap in valid_gaps:
             try:
-                raw_df = self._query(params, gap.start, gap.end)
+                raw_df = self._query(params, gap.start, gap.end, ts_filter=ts_filter)
                 wide, meta = self._to_wide(raw_df, pivot_col, value_col)
                 new_wide_frames.append(wide)
                 if meta:
@@ -279,27 +288,30 @@ class BaseNamespace:
         value_col: str = "value",
         label_fn: Callable[[str], str] = country_name,
         label_col: str = "country",
+        ts_filter: TimeSeriesFilter = None,
+        partition_fn: Callable[[str], str] = str,
     ) -> pd.DataFrame:
         """Execute a cached query for one or many values.
 
-        Each value is its own cache partition. Multi-value queries add
-        a label column, same as :meth:`_query_multi`.
+        Each value is its own cache partition, named by *partition_fn(value)*.
+        Multi-value queries add a label column, same as :meth:`_query_multi`.
         """
         if self._cache is None:
             return self._query_multi(build_params, values, start, end,
-                                     label_fn=label_fn, label_col=label_col)
+                                     label_fn=label_fn, label_col=label_col,
+                                     ts_filter=ts_filter)
 
         if isinstance(values, str):
             return self._query_cached(
-                domain, topic, values, build_params(values), start, end,
-                pivot_col=pivot_col, value_col=value_col,
+                domain, topic, partition_fn(values), build_params(values), start, end,
+                pivot_col=pivot_col, value_col=value_col, ts_filter=ts_filter,
             )
 
         frames = []
         for val in values:
             df = self._query_cached(
-                domain, topic, val, build_params(val), start, end,
-                pivot_col=pivot_col, value_col=value_col,
+                domain, topic, partition_fn(val), build_params(val), start, end,
+                pivot_col=pivot_col, value_col=value_col, ts_filter=ts_filter,
             )
             df[label_col] = label_fn(val)
             frames.append(df)

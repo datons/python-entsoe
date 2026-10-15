@@ -92,6 +92,28 @@ environment variable.
 export $(cat .env | xargs) && uv run jupyter nbconvert --execute ...
 ```
 
+## 7. Day-ahead documents (A44) mix several auctions
+
+**Affected endpoints:** `prices.day_ahead`
+
+**Problem:** One A44 response can hold several price series for the same hours:
+
+- DE_LU and AT publish the SDAC auction (gate closure 12:00 CET) as `classificationSequence_AttributeInstanceComponent.position` 1 and the EXAA auction (10:15 CET) as position 2.
+- ES also returns the intraday auctions (IDA1–3) under `contract_MarketAgreement.type` A07, numbered by the same sequence element.
+- Some zones (FR, AT) repeat an identical TimeSeries.
+
+Parsing every series gives two or more prices per timestamp.
+
+**Solution:** Keep only daily contracts (`A01`, or no contract type) whose sequence matches the requested one, treating a missing sequence as 1. `day_ahead(..., sequence=2)` returns EXAA. Identical rows are dropped.
+
+## 8. Curve type A03 omits repeated points
+
+**Affected endpoints:** all (prices, load, generation, transmission)
+
+**Problem:** With `<curveType>A03</curveType>` (variable-sized blocks), a Point applies until the next Point, and positions whose value equals the previous one are left out. Reading only the Points present loses those intervals: a day of quarter-hourly prices can come back with 95 rows, and a flat generation series with a single row.
+
+**Solution:** Fill every position up to the Period's `timeInterval/end` with the last value seen. The Period end tracks published data, so recent partial days are not extended.
+
 ## Summary table
 
 | Issue | Endpoint | Symptom | Fix |
@@ -102,3 +124,5 @@ export $(cat .env | xargs) && uv run jupyter nbconvert --execute ...
 | Route availability | net_transfer_capacity | `NoDataError` for FR→DE_LU | Use FR→ES, FR→GB, FR→IT_NORTH |
 | Value tag name | imbalance_prices | All values are `None` | Parse `imbalance_Price.amount` tag |
 | Env vars in notebooks | all (via nbconvert) | `ValueError: API key required` | Export env vars before execution |
+| Mixed auctions | prices.day_ahead | Duplicate timestamps (DE_LU, AT, ES) | Filter by contract type and sequence |
+| A03 omitted points | all | Missing intervals | Forward-fill to Period end |
