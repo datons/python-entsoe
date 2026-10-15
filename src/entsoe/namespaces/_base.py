@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Callable, Optional, Union
 
 import pandas as pd
 
-from ..exceptions import InvalidParameterError, NoDataError
+from ..exceptions import InvalidParameterError
 from .._mappings import country_name, lookup_area
 
 if TYPE_CHECKING:
@@ -232,17 +232,14 @@ class BaseNamespace:
         )
         new_wide_frames = []
         gap_meta: dict = {}
+        # A failed request propagates: returning the cache without the gap
+        # would silently hand back partial or empty data.
         for gap in valid_gaps:
-            try:
-                raw_df = self._query(params, gap.start, gap.end, ts_filter=ts_filter)
-                wide, meta = self._to_wide(raw_df, pivot_col, value_col)
-                new_wide_frames.append(wide)
-                if meta:
-                    gap_meta.update(meta)
-            except (InvalidParameterError, NoDataError):
-                raise
-            except Exception as exc:
-                logger.warning("Failed to fetch gap %s→%s: %s", gap.start, gap.end, exc)
+            raw_df = self._query(params, gap.start, gap.end, ts_filter=ts_filter)
+            wide, meta = self._to_wide(raw_df, pivot_col, value_col)
+            new_wide_frames.append(wide)
+            if meta:
+                gap_meta.update(meta)
 
         # 4. Merge new data with cache and persist
         if new_wide_frames:

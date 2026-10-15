@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.3](https://gitlab.com/datons.com/libraries/python-entsoe/-/tags/v0.6.3) (2026-10-15)
+
+
+### Bug Fixes
+
+* **cli:** `--period today` and `--period yesterday` produced an empty range and always failed with "start must be before end"; each now covers the full day.
+* **cache:** a failed download (timeout, HTTP error) no longer returns an empty or partial DataFrame with only a warning in the log; the error is raised.
+
 ## [0.6.2](https://gitlab.com/datons.com/libraries/python-entsoe/-/tags/v0.6.2) (2026-10-15)
 
 

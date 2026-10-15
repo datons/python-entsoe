@@ -100,11 +100,11 @@ def _expand_period(period: str, today: date) -> tuple[date, date]:
 
     p = period.lower().strip()
 
+    # The library's end is exclusive, so a single day ends on the next one.
     if p == "today":
-        return today, today
+        return today, today + timedelta(days=1)
     if p == "yesterday":
-        yesterday = today - timedelta(days=1)
-        return yesterday, yesterday
+        return today - timedelta(days=1), today
     if p == "week":
         monday = today - timedelta(days=today.weekday())
         return monday, today

@@ -97,3 +97,17 @@ def test_unknown_sequence_raises_no_data():
 
     with pytest.raises(NoDataError):
         _day_ahead(ES, sequence=2)
+
+
+def test_cached_query_raises_on_network_error(tmp_path):
+    import requests
+
+    from entsoe.cache import CacheConfig, CacheStore
+
+    class _DownHttp:
+        def query(self, params, start, end):
+            raise requests.exceptions.ConnectTimeout("down")
+
+    ns = PricesNamespace(_DownHttp(), cache=CacheStore(CacheConfig(cache_dir=tmp_path)))
+    with pytest.raises(requests.exceptions.ConnectTimeout):
+        ns.day_ahead("2026-10-13", "2026-10-14", country="DE_LU")
