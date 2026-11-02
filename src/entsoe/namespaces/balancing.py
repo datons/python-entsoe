@@ -20,6 +20,8 @@ class BalancingNamespace(BaseNamespace):
         start: Timestamp,
         end: Timestamp,
         country: OneOrMany,
+        *,
+        output_tz: str | None = None,
     ) -> pd.DataFrame:
         """Query imbalance prices.
 
@@ -28,6 +30,8 @@ class BalancingNamespace(BaseNamespace):
             end: Period end — date string or tz-aware Timestamp.
             country: Country code or list of codes (e.g., "FR" or ["FR", "NL"]).
                 When a list is passed, results include a ``country`` column.
+
+            output_tz: Override the client result timezone (UTC, local, or IANA name).
 
         Returns:
             DataFrame with columns: timestamp, value (EUR/MWh).
@@ -39,15 +43,17 @@ class BalancingNamespace(BaseNamespace):
                 "controlArea_Domain": self._area(code),
             }
 
-        return self._query_multi_cached(
+        return self._output(self._query_multi_cached(
             "balancing", "imbalance_prices", _params, country, start, end,
-        )
+        ), country, output_tz)
 
     def imbalance_volumes(
         self,
         start: Timestamp,
         end: Timestamp,
         country: OneOrMany,
+        *,
+        output_tz: str | None = None,
     ) -> pd.DataFrame:
         """Query imbalance volumes.
 
@@ -56,6 +62,8 @@ class BalancingNamespace(BaseNamespace):
             end: Period end — date string or tz-aware Timestamp.
             country: Country code or list of codes (e.g., "FR" or ["FR", "NL"]).
                 When a list is passed, results include a ``country`` column.
+
+            output_tz: Override the client result timezone (UTC, local, or IANA name).
 
         Returns:
             DataFrame with columns: timestamp, value (MW).
@@ -67,6 +75,6 @@ class BalancingNamespace(BaseNamespace):
                 "controlArea_Domain": self._area(code),
             }
 
-        return self._query_multi_cached(
+        return self._output(self._query_multi_cached(
             "balancing", "imbalance_volumes", _params, country, start, end,
-        )
+        ), country, output_tz)

@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import logging
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from typing import TYPE_CHECKING, Callable, Optional, Union
 
 import pandas as pd
 
 from ..exceptions import InvalidParameterError
-from .._mappings import country_name, lookup_area
+from .._mappings import AREA_TZ, EIC_TO_ISO, country_name, lookup_area
 
 if TYPE_CHECKING:
     import xml.etree.ElementTree as ET
@@ -28,6 +29,52 @@ OneOrMany = Union[str, list[str]]
 TimeSeriesFilter = Optional[Callable[["ET.Element"], bool]]
 
 
+def validate_output_tz(value: str) -> str:
+    """Validate an output timezone without changing its spelling."""
+    if value == "local":
+        return value
+    if not isinstance(value, str):
+        raise InvalidParameterError("output_tz must be 'UTC', 'local', or an IANA timezone.")
+    try:
+        ZoneInfo(value)
+    except (ZoneInfoNotFoundError, ValueError):
+        raise InvalidParameterError(
+            f"Invalid output_tz {value!r}; use 'UTC', 'local', or an IANA timezone."
+        ) from None
+    return value
+
+
+def _to_output_tz(df: pd.DataFrame, zones: OneOrMany, output_tz: str) -> pd.DataFrame:
+    """Convert a UTC result at the namespace boundary without mutating cached data.
+
+    For cross-border requests, callers pass the first in_domain zone; local time then follows that zone.
+    """
+    target = validate_output_tz(output_tz)
+    if target == "UTC":
+        return df
+    if target == "local":
+        requested = [zones] if isinstance(zones, str) else zones
+        timezones = [AREA_TZ[EIC_TO_ISO[lookup_area(zone)]] for zone in requested]
+        instants = df["timestamp"].drop_duplicates() if "timestamp" in df else []
+        if not len(instants):
+            instants = [pd.Timestamp("2024-01-01", tz="UTC"), pd.Timestamp("2024-07-01", tz="UTC")]
+        signatures = {
+            zone: tuple(instant.to_pydatetime().astimezone(ZoneInfo(zone)).utcoffset() for instant in instants)
+            for zone in set(timezones)
+        }
+        if len(set(signatures.values())) != 1:
+            raise InvalidParameterError(
+                f"Local output spans different timezones: {', '.join(sorted(set(timezones)))}. "
+                "Use 'UTC' or a fixed IANA timezone."
+            )
+        target = timezones[0]
+    if df.empty or "timestamp" not in df:
+        return df.copy()
+    result = df.copy()
+    result["timestamp"] = result["timestamp"].dt.tz_convert(target)
+    return result
+
+
 class BaseNamespace:
     """Base class for domain namespaces.
 
@@ -40,11 +87,16 @@ class BaseNamespace:
         http: HttpClient,
         *,
         tz: str = "Europe/Brussels",
+        output_tz: str = "UTC",
         cache: CacheStore | None = None,
     ) -> None:
         self._http = http
         self._tz = tz
+        self._output_tz = validate_output_tz(output_tz)
         self._cache = cache
+
+    def _output(self, df: pd.DataFrame, zones: OneOrMany, output_tz: str | None) -> pd.DataFrame:
+        return _to_output_tz(df, zones, self._output_tz if output_tz is None else output_tz)
 
     # ------------------------------------------------------------------
     # Timestamp coercion

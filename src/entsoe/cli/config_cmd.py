@@ -9,11 +9,15 @@ config_app = typer.Typer(no_args_is_help=True)
 
 @config_app.command("set")
 def config_set(
-    key: str = typer.Argument(..., help="Configuration key (e.g., 'api-key')"),
+    key: str = typer.Argument(..., help="Configuration key (api-key or output-tz)"),
     value: str = typer.Argument(..., help="Configuration value"),
 ):
     """Set a configuration value."""
     from entsoe.cli.config import set_config
+
+    if key == "output-tz":
+        from entsoe.namespaces._base import validate_output_tz
+        validate_output_tz(value)
 
     set_config(key, value)
     typer.echo(f"Set {key} = {'***' if 'key' in key.lower() else value}")

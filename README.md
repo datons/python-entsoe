@@ -29,7 +29,7 @@ start = pd.Timestamp("2024-06-01", tz="Europe/Paris")
 df = client.load.actual(start, "2024-06-08", country="FR")
 ```
 
-Every method returns a `pandas.DataFrame` with a `timestamp` column (UTC) and a `value` column.
+Every method returns a `pandas.DataFrame` with a timezone-aware `timestamp` column and a `value` column.
 
 ## Authentication
 
@@ -188,7 +188,11 @@ df = client.load.actual("2024-01-01", pd.Timestamp("2024-01-07", tz="UTC"), coun
 start = pd.Timestamp("2024-01-01")  # ← no tz, will error
 ```
 
-Returned timestamps are always in **UTC**.
+## Timezones
+
+The client `tz` setting interprets input date strings (default `Europe/Brussels`); it does not control returned timestamps. The separate `output_tz` setting controls results: `"UTC"` (default, unchanged behavior), `"local"` (the requested area's timezone), or a fixed IANA timezone such as `"Europe/Madrid"`. Every namespace method also accepts `output_tz=` for one call. The CLI accepts `--tz` on data commands, or `entsoe config set output-tz local` as a persistent default; `--tz` takes precedence.
+
+For a multi-area request, `"local"` requires matching clock offsets throughout the returned period (for example, FR and ES); otherwise choose `"UTC"` or a fixed IANA zone. Cross-border results use the first importing (`in_domain`) zone. During the October DST fall-back, local wall-clock times repeat; each row retains its offset, but timestamps cease to be unique if the timezone is stripped.
 
 ## Features
 

@@ -22,6 +22,8 @@ class PricesNamespace(BaseNamespace):
         end: Timestamp,
         country: OneOrMany,
         sequence: int = 1,
+        *,
+        output_tz: str | None = None,
     ) -> pd.DataFrame:
         """Query day-ahead electricity prices.
 
@@ -39,6 +41,8 @@ class PricesNamespace(BaseNamespace):
                 ``2`` is the separate EXAA auction (10:15 CET) published for
                 DE_LU and AT. Zones that publish a single auction without a
                 sequence count as ``1``.
+
+            output_tz: Override the client result timezone (UTC, local, or IANA name).
 
         Returns:
             DataFrame with columns: timestamp, value (EUR/MWh).
@@ -58,8 +62,8 @@ class PricesNamespace(BaseNamespace):
                 return False
             return (timeseries_sequence(ts) or 1) == sequence
 
-        return self._query_multi_cached(
+        return self._output(self._query_multi_cached(
             "prices", "day_ahead", _params, country, start, end,
             ts_filter=_keep,
             partition_fn=lambda code: code if sequence == 1 else f"{code}.seq{sequence}",
-        )
+        ), country, output_tz)

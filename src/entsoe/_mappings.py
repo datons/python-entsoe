@@ -64,6 +64,30 @@ AREA_CODES: dict[str, str] = {
     "XK": "10Y1001C--00100H",
 }
 
+# IANA timezone of each ENTSO-E bidding area. Keys intentionally mirror AREA_CODES.
+AREA_TZ: dict[str, str] = {
+    "AL": "Europe/Tirane", "AT": "Europe/Vienna", "BA": "Europe/Sarajevo",
+    "BE": "Europe/Brussels", "BG": "Europe/Sofia", "CH": "Europe/Zurich",
+    "CZ": "Europe/Prague", "DE": "Europe/Berlin", "DE_LU": "Europe/Berlin",
+    "DE_AT_LU": "Europe/Berlin", "DK": "Europe/Copenhagen",
+    "DK_1": "Europe/Copenhagen", "DK_2": "Europe/Copenhagen",
+    "EE": "Europe/Tallinn", "ES": "Europe/Madrid", "FI": "Europe/Helsinki",
+    "FR": "Europe/Paris", "GB": "Europe/London", "GR": "Europe/Athens",
+    "HR": "Europe/Zagreb", "HU": "Europe/Budapest", "IE": "Europe/Dublin",
+    "IE_SEM": "Europe/Dublin", "IT": "Europe/Rome", "IT_NORTH": "Europe/Rome",
+    "IT_CNOR": "Europe/Rome", "IT_CSUD": "Europe/Rome", "IT_SUD": "Europe/Rome",
+    "IT_SICI": "Europe/Rome", "IT_SARD": "Europe/Rome", "LT": "Europe/Vilnius",
+    "LU": "Europe/Luxembourg", "LV": "Europe/Riga", "ME": "Europe/Podgorica",
+    "MK": "Europe/Skopje", "MT": "Europe/Malta", "NL": "Europe/Amsterdam",
+    "NO": "Europe/Oslo", "NO_1": "Europe/Oslo", "NO_2": "Europe/Oslo",
+    "NO_3": "Europe/Oslo", "NO_4": "Europe/Oslo", "NO_5": "Europe/Oslo",
+    "PL": "Europe/Warsaw", "PT": "Europe/Lisbon", "RO": "Europe/Bucharest",
+    "RS": "Europe/Belgrade", "SE": "Europe/Stockholm", "SE_1": "Europe/Stockholm",
+    "SE_2": "Europe/Stockholm", "SE_3": "Europe/Stockholm", "SE_4": "Europe/Stockholm",
+    "SI": "Europe/Ljubljana", "SK": "Europe/Bratislava", "TR": "Europe/Istanbul",
+    "UA": "Europe/Kyiv", "UK": "Europe/London", "XK": "Europe/Belgrade",
+}
+
 # ISO code → human-readable country/area name
 COUNTRY_NAMES: dict[str, str] = {
     "AL": "Albania",

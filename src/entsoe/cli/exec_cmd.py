@@ -62,6 +62,7 @@ def exec_prices(
     format: str = typer.Option("table", "--format", "-f", help="Output format: table, csv, json"),
     output_path: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
     api_key: Optional[str] = typer.Option(None, "--api-key", help="ENTSO-E API key"),
+    tz: Optional[str] = typer.Option(None, "--tz", help="Output timezone: UTC, local, or IANA name"),
 ):
     """Fetch price data and evaluate a Python expression.
 
@@ -73,7 +74,7 @@ def exec_prices(
 
     method_name = _resolve_method(method, _PRICES_METHODS)
     s, e = resolve_dates(start, end, period)
-    client = get_client(api_key)
+    client = get_client(api_key, tz)
     fn = getattr(client.prices, method_name)
     df = fn(s, e, country=resolve_many_required(country))
     _eval_and_render(df, expr, format, output_path)
@@ -96,6 +97,7 @@ def exec_load(
     format: str = typer.Option("table", "--format", "-f", help="Output format: table, csv, json"),
     output_path: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
     api_key: Optional[str] = typer.Option(None, "--api-key", help="ENTSO-E API key"),
+    tz: Optional[str] = typer.Option(None, "--tz", help="Output timezone: UTC, local, or IANA name"),
 ):
     """Fetch load data and evaluate a Python expression.
 
@@ -107,7 +109,7 @@ def exec_load(
 
     method_name = _resolve_method(method, _LOAD_METHODS)
     s, e = resolve_dates(start, end, period)
-    client = get_client(api_key)
+    client = get_client(api_key, tz)
     fn = getattr(client.load, method_name)
     df = fn(s, e, country=resolve_many_required(country))
     _eval_and_render(df, expr, format, output_path)
@@ -136,6 +138,7 @@ def exec_generation(
     format: str = typer.Option("table", "--format", "-f", help="Output format: table, csv, json"),
     output_path: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
     api_key: Optional[str] = typer.Option(None, "--api-key", help="ENTSO-E API key"),
+    tz: Optional[str] = typer.Option(None, "--tz", help="Output timezone: UTC, local, or IANA name"),
 ):
     """Fetch generation data and evaluate a Python expression.
 
@@ -147,7 +150,7 @@ def exec_generation(
 
     method_name = _resolve_method(method, _GENERATION_METHODS)
     s, e = resolve_dates(start, end, period)
-    client = get_client(api_key)
+    client = get_client(api_key, tz)
     fn = getattr(client.generation, method_name)
     df = fn(s, e, country=resolve_many_required(country), psr_type=resolve_many(psr))
     _eval_and_render(df, expr, format, output_path)
@@ -176,6 +179,7 @@ def exec_transmission(
     format: str = typer.Option("table", "--format", "-f", help="Output format: table, csv, json"),
     output_path: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
     api_key: Optional[str] = typer.Option(None, "--api-key", help="ENTSO-E API key"),
+    tz: Optional[str] = typer.Option(None, "--tz", help="Output timezone: UTC, local, or IANA name"),
 ):
     """Fetch transmission data and evaluate a Python expression.
 
@@ -200,7 +204,7 @@ def exec_transmission(
         typer.echo("Error: Provide --from/--to or --border.", err=True)
         raise typer.Exit(1)
 
-    client = get_client(api_key)
+    client = get_client(api_key, tz)
     fn = getattr(client.transmission, method_name)
     df = fn(s, e, **kwargs)
     _eval_and_render(df, expr, format, output_path)
@@ -223,6 +227,7 @@ def exec_balancing(
     format: str = typer.Option("table", "--format", "-f", help="Output format: table, csv, json"),
     output_path: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
     api_key: Optional[str] = typer.Option(None, "--api-key", help="ENTSO-E API key"),
+    tz: Optional[str] = typer.Option(None, "--tz", help="Output timezone: UTC, local, or IANA name"),
 ):
     """Fetch balancing data and evaluate a Python expression.
 
@@ -234,7 +239,7 @@ def exec_balancing(
 
     method_name = _resolve_method(method, _BALANCING_METHODS)
     s, e = resolve_dates(start, end, period)
-    client = get_client(api_key)
+    client = get_client(api_key, tz)
     fn = getattr(client.balancing, method_name)
     df = fn(s, e, country=resolve_many_required(country))
     _eval_and_render(df, expr, format, output_path)

@@ -34,7 +34,10 @@ def output(df, format: str, title: str = "", output_path: str | None = None):
             typer.echo(text)
 
     elif format == "json":
-        text = df.to_json(orient="records", indent=2, date_format="iso")
+        display = df.copy()
+        if "timestamp" in display:
+            display["timestamp"] = display["timestamp"].map(lambda value: value.isoformat())
+        text = display.to_json(orient="records", indent=2)
         if output_path:
             with open(output_path, "w") as f:
                 f.write(text)
@@ -72,7 +75,10 @@ def render_result(result, format: str, output_path: str | None) -> None:
         if format == "csv":
             text = result.to_csv()
         elif format == "json":
-            text = result.to_json(orient="records", indent=2, date_format="iso")
+            display = result.copy()
+            if "timestamp" in display:
+                display["timestamp"] = display["timestamp"].map(lambda value: value.isoformat())
+            text = display.to_json(orient="records", indent=2)
         else:
             table = Table()
             idx_name = result.index.name or ""

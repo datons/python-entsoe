@@ -22,12 +22,13 @@ def actual(
     format: str = typer.Option("table", "--format", "-f", help="Output format: table, csv, json"),
     output_path: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
     api_key: Optional[str] = typer.Option(None, "--api-key", help="ENTSO-E API key"),
+    tz: Optional[str] = typer.Option(None, "--tz", help="Output timezone: UTC, local, or IANA name"),
 ):
     """Query actual generation output per type."""
     from entsoe.cli.app import get_client
 
     s, e = resolve_dates(start, end, period)
-    client = get_client(api_key)
+    client = get_client(api_key, tz)
     df = client.generation.actual(s, e, country=resolve_many_required(country), psr_type=resolve_many(psr))
     output(df, format, title="Actual Generation", output_path=output_path)
 
@@ -42,12 +43,13 @@ def forecast(
     format: str = typer.Option("table", "--format", "-f", help="Output format: table, csv, json"),
     output_path: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
     api_key: Optional[str] = typer.Option(None, "--api-key", help="ENTSO-E API key"),
+    tz: Optional[str] = typer.Option(None, "--tz", help="Output timezone: UTC, local, or IANA name"),
 ):
     """Query day-ahead generation forecast (wind/solar)."""
     from entsoe.cli.app import get_client
 
     s, e = resolve_dates(start, end, period)
-    client = get_client(api_key)
+    client = get_client(api_key, tz)
     df = client.generation.forecast(s, e, country=resolve_many_required(country), psr_type=resolve_many(psr))
     output(df, format, title="Generation Forecast", output_path=output_path)
 
@@ -62,12 +64,13 @@ def capacity(
     format: str = typer.Option("table", "--format", "-f", help="Output format: table, csv, json"),
     output_path: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
     api_key: Optional[str] = typer.Option(None, "--api-key", help="ENTSO-E API key"),
+    tz: Optional[str] = typer.Option(None, "--tz", help="Output timezone: UTC, local, or IANA name"),
 ):
     """Query installed generation capacity per type."""
     from entsoe.cli.app import get_client
 
     s, e = resolve_dates(start, end, period)
-    client = get_client(api_key)
+    client = get_client(api_key, tz)
     df = client.generation.installed_capacity(s, e, country=resolve_many_required(country), psr_type=resolve_many(psr))
     output(df, format, title="Installed Capacity", output_path=output_path)
 
@@ -82,12 +85,13 @@ def per_plant(
     format: str = typer.Option("table", "--format", "-f", help="Output format: table, csv, json"),
     output_path: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
     api_key: Optional[str] = typer.Option(None, "--api-key", help="ENTSO-E API key"),
+    tz: Optional[str] = typer.Option(None, "--tz", help="Output timezone: UTC, local, or IANA name"),
 ):
     """Query actual generation per production unit."""
     from entsoe.cli.app import get_client
 
     s, e = resolve_dates(start, end, period)
-    client = get_client(api_key)
+    client = get_client(api_key, tz)
     df = client.generation.per_plant(s, e, country=resolve_many_required(country), psr_type=resolve_many(psr))
     output(df, format, title="Generation Per Plant", output_path=output_path)
 

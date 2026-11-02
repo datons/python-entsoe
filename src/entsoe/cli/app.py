@@ -6,7 +6,7 @@ from typing import Optional
 
 import typer
 
-from entsoe.cli.config import get_api_key
+from entsoe.cli.config import get_api_key, get_config
 
 app = typer.Typer(
     name="entsoe",
@@ -15,7 +15,7 @@ app = typer.Typer(
 )
 
 
-def get_client(api_key: str | None = None):
+def get_client(api_key: str | None = None, output_tz: str | None = None):
     """Lazy import + construct client."""
     from entsoe.client import ENTSOEClient
 
@@ -26,7 +26,8 @@ def get_client(api_key: str | None = None):
             err=True,
         )
         raise typer.Exit(1)
-    return ENTSOEClient(api_key=resolved)
+    configured_tz = get_config("output-tz") if output_tz is None else output_tz
+    return ENTSOEClient(api_key=resolved, output_tz="UTC" if configured_tz is None else configured_tz)
 
 
 # -- Register sub-commands ---------------------------------------------------

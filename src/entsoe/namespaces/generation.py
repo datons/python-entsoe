@@ -28,6 +28,7 @@ class GenerationNamespace(BaseNamespace):
         psr_type: OneOrMany | None,
         *,
         cache_topic: str,
+        output_tz: str | None,
     ) -> pd.DataFrame:
         """Shared logic for generation queries with country + psr_type multi-support."""
 
@@ -67,7 +68,7 @@ class GenerationNamespace(BaseNamespace):
                         from .._mappings import country_name
                         sub_df["country"] = country_name(code)
                     frames.append(sub_df)
-            return pd.concat(frames, ignore_index=True)
+            return self._output(pd.concat(frames, ignore_index=True), country, output_tz)
 
         # Standard case: single or no psr_type filter
         df = self._query_multi_cached(
@@ -81,7 +82,7 @@ class GenerationNamespace(BaseNamespace):
             resolved_name = psr_name(psr_type)
             df = df[df[pivot_col] == resolved_name].reset_index(drop=True)
 
-        return df
+        return self._output(df, country, output_tz)
 
     def actual(
         self,
@@ -89,6 +90,8 @@ class GenerationNamespace(BaseNamespace):
         end: Timestamp,
         country: OneOrMany,
         psr_type: OneOrMany | None = None,
+        *,
+        output_tz: str | None = None,
     ) -> pd.DataFrame:
         """Query actual generation output per type.
 
@@ -101,11 +104,13 @@ class GenerationNamespace(BaseNamespace):
                 (e.g., "solar", ["solar", "wind_onshore"], or "B16").
                 If None, returns all types.
 
+            output_tz: Override the client result timezone (UTC, local, or IANA name).
+
         Returns:
             DataFrame with columns: timestamp, value (MW), psr_type.
         """
         return self._gen_query("A75", "A16", start, end, country, psr_type,
-                               cache_topic="actual")
+                               cache_topic="actual", output_tz=output_tz)
 
     def forecast(
         self,
@@ -113,6 +118,8 @@ class GenerationNamespace(BaseNamespace):
         end: Timestamp,
         country: OneOrMany,
         psr_type: OneOrMany | None = None,
+        *,
+        output_tz: str | None = None,
     ) -> pd.DataFrame:
         """Query day-ahead generation forecast (wind and solar).
 
@@ -123,11 +130,13 @@ class GenerationNamespace(BaseNamespace):
                 When a list is passed, results include a ``country`` column.
             psr_type: PSR type code/name, list of codes/names, or None.
 
+            output_tz: Override the client result timezone (UTC, local, or IANA name).
+
         Returns:
             DataFrame with columns: timestamp, value (MW), psr_type.
         """
         return self._gen_query("A69", "A01", start, end, country, psr_type,
-                               cache_topic="forecast")
+                               cache_topic="forecast", output_tz=output_tz)
 
     def installed_capacity(
         self,
@@ -135,6 +144,8 @@ class GenerationNamespace(BaseNamespace):
         end: Timestamp,
         country: OneOrMany,
         psr_type: OneOrMany | None = None,
+        *,
+        output_tz: str | None = None,
     ) -> pd.DataFrame:
         """Query installed generation capacity per type.
 
@@ -145,11 +156,13 @@ class GenerationNamespace(BaseNamespace):
                 When a list is passed, results include a ``country`` column.
             psr_type: PSR type code/name, list of codes/names, or None.
 
+            output_tz: Override the client result timezone (UTC, local, or IANA name).
+
         Returns:
             DataFrame with columns: timestamp, value (MW), psr_type.
         """
         return self._gen_query("A68", "A33", start, end, country, psr_type,
-                               cache_topic="capacity")
+                               cache_topic="capacity", output_tz=output_tz)
 
     def per_plant(
         self,
@@ -157,6 +170,8 @@ class GenerationNamespace(BaseNamespace):
         end: Timestamp,
         country: OneOrMany,
         psr_type: OneOrMany | None = None,
+        *,
+        output_tz: str | None = None,
     ) -> pd.DataFrame:
         """Query actual generation per production unit.
 
@@ -167,9 +182,11 @@ class GenerationNamespace(BaseNamespace):
                 When a list is passed, results include a ``country`` column.
             psr_type: PSR type code/name, list of codes/names, or None.
 
+            output_tz: Override the client result timezone (UTC, local, or IANA name).
+
         Returns:
             DataFrame with columns: timestamp, value (MW), psr_type,
             and additional unit identifiers.
         """
         return self._gen_query("A73", "A16", start, end, country, psr_type,
-                               cache_topic="per_plant")
+                               cache_topic="per_plant", output_tz=output_tz)

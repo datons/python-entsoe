@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.7.0](https://gitlab.com/datons.com/libraries/python-entsoe/-/tags/v0.7.0) (2026-11-02)
+
+### Features
+
+* **timezones:** configure result timestamps as UTC (default), local area time, or a fixed IANA timezone through the client, per-call override, or CLI `--tz` and persistent `output-tz` setting.
+
 ## [0.6.3](https://gitlab.com/datons.com/libraries/python-entsoe/-/tags/v0.6.3) (2026-10-15)
 
 

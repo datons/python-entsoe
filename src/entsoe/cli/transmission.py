@@ -43,13 +43,14 @@ def flows(
     format: str = typer.Option("table", "--format", "-f", help="Output format: table, csv, json"),
     output_path: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
     api_key: Optional[str] = typer.Option(None, "--api-key", help="ENTSO-E API key"),
+    tz: Optional[str] = typer.Option(None, "--tz", help="Output timezone: UTC, local, or IANA name"),
 ):
     """Query physical cross-border flows."""
     from entsoe.cli.app import get_client
 
     s, e = resolve_dates(start, end, period)
     kwargs = _resolve_borders_or_pairs(country_from, country_to, border)
-    client = get_client(api_key)
+    client = get_client(api_key, tz)
     df = client.transmission.crossborder_flows(s, e, **kwargs)
     output(df, format, title="Cross-Border Flows", output_path=output_path)
 
@@ -65,13 +66,14 @@ def exchanges(
     format: str = typer.Option("table", "--format", "-f", help="Output format: table, csv, json"),
     output_path: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
     api_key: Optional[str] = typer.Option(None, "--api-key", help="ENTSO-E API key"),
+    tz: Optional[str] = typer.Option(None, "--tz", help="Output timezone: UTC, local, or IANA name"),
 ):
     """Query scheduled commercial exchanges (day-ahead)."""
     from entsoe.cli.app import get_client
 
     s, e = resolve_dates(start, end, period)
     kwargs = _resolve_borders_or_pairs(country_from, country_to, border)
-    client = get_client(api_key)
+    client = get_client(api_key, tz)
     df = client.transmission.scheduled_exchanges(s, e, **kwargs)
     output(df, format, title="Scheduled Exchanges", output_path=output_path)
 
@@ -87,13 +89,14 @@ def capacity(
     format: str = typer.Option("table", "--format", "-f", help="Output format: table, csv, json"),
     output_path: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
     api_key: Optional[str] = typer.Option(None, "--api-key", help="ENTSO-E API key"),
+    tz: Optional[str] = typer.Option(None, "--tz", help="Output timezone: UTC, local, or IANA name"),
 ):
     """Query day-ahead net transfer capacity."""
     from entsoe.cli.app import get_client
 
     s, e = resolve_dates(start, end, period)
     kwargs = _resolve_borders_or_pairs(country_from, country_to, border)
-    client = get_client(api_key)
+    client = get_client(api_key, tz)
     df = client.transmission.net_transfer_capacity(s, e, **kwargs)
     output(df, format, title="Net Transfer Capacity", output_path=output_path)
 

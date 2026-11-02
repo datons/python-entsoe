@@ -22,12 +22,13 @@ def day_ahead(
     format: str = typer.Option("table", "--format", "-f", help="Output format: table, csv, json"),
     output_path: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
     api_key: Optional[str] = typer.Option(None, "--api-key", help="ENTSO-E API key"),
+    tz: Optional[str] = typer.Option(None, "--tz", help="Output timezone: UTC, local, or IANA name"),
 ):
     """Query day-ahead electricity prices."""
     from entsoe.cli.app import get_client
 
     s, e = resolve_dates(start, end, period)
-    client = get_client(api_key)
+    client = get_client(api_key, tz)
     countries = resolve_many_required(country)
     df = client.prices.day_ahead(s, e, country=countries, sequence=sequence)
     output(df, format, title="Day-Ahead Prices", output_path=output_path)

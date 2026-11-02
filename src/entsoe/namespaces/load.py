@@ -20,6 +20,8 @@ class LoadNamespace(BaseNamespace):
         start: Timestamp,
         end: Timestamp,
         country: OneOrMany,
+        *,
+        output_tz: str | None = None,
     ) -> pd.DataFrame:
         """Query actual total system load.
 
@@ -28,6 +30,8 @@ class LoadNamespace(BaseNamespace):
             end: Period end — date string or tz-aware Timestamp.
             country: Country code or list of codes (e.g., "FR" or ["FR", "ES"]).
                 When a list is passed, results include a ``country`` column.
+
+            output_tz: Override the client result timezone (UTC, local, or IANA name).
 
         Returns:
             DataFrame with columns: timestamp, value (MW).
@@ -40,15 +44,17 @@ class LoadNamespace(BaseNamespace):
                 "outBiddingZone_Domain": self._area(code),
             }
 
-        return self._query_multi_cached(
+        return self._output(self._query_multi_cached(
             "load", "actual", _params, country, start, end,
-        )
+        ), country, output_tz)
 
     def forecast(
         self,
         start: Timestamp,
         end: Timestamp,
         country: OneOrMany,
+        *,
+        output_tz: str | None = None,
     ) -> pd.DataFrame:
         """Query day-ahead load forecast.
 
@@ -57,6 +63,8 @@ class LoadNamespace(BaseNamespace):
             end: Period end — date string or tz-aware Timestamp.
             country: Country code or list of codes (e.g., "FR" or ["FR", "ES"]).
                 When a list is passed, results include a ``country`` column.
+
+            output_tz: Override the client result timezone (UTC, local, or IANA name).
 
         Returns:
             DataFrame with columns: timestamp, value (MW).
@@ -69,6 +77,6 @@ class LoadNamespace(BaseNamespace):
                 "outBiddingZone_Domain": self._area(code),
             }
 
-        return self._query_multi_cached(
+        return self._output(self._query_multi_cached(
             "load", "forecast", _params, country, start, end,
-        )
+        ), country, output_tz)

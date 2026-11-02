@@ -7,6 +7,7 @@ from pathlib import Path
 
 from ._http import HttpClient
 from .cache import CacheConfig, CacheStore
+from .namespaces._base import validate_output_tz
 from .namespaces import (
     BalancingNamespace,
     GenerationNamespace,
@@ -38,6 +39,8 @@ class ENTSOEClient:
 
         # Override default timezone
         client = ENTSOEClient(tz="UTC")
+        client = ENTSOEClient(output_tz="local")  # results use each zone's local time
+        client = ENTSOEClient(output_tz="Europe/Madrid")  # fixed output zone
 
         # Disable cache
         client = ENTSOEClient(cache=False)
@@ -60,6 +63,7 @@ class ENTSOEClient:
         cache: bool = True,
         cache_dir: str | Path | None = None,
         cache_recent_ttl: int = 48,
+        output_tz: str = "UTC",
     ) -> None:
         """Initialize the client.
 
@@ -71,10 +75,13 @@ class ENTSOEClient:
             cache: Whether to enable local parquet caching. Defaults to True.
             cache_dir: Custom cache directory. Defaults to ``~/.cache/entsoe/``.
             cache_recent_ttl: Hours before data is considered final (default 48).
+            output_tz: Result timezone: ``UTC`` (default), ``local`` for the requested area, or an IANA name.
 
         Raises:
             ValueError: If no API key is found.
+            InvalidParameterError: If output_tz is not UTC, local, or a valid IANA timezone.
         """
+        output_tz = validate_output_tz(output_tz)
         resolved_key = api_key or os.environ.get("ENTSOE_API_KEY")
         if not resolved_key:
             raise ValueError(
@@ -94,11 +101,11 @@ class ENTSOEClient:
 
         cache_store = CacheStore(cache_config) if cache else None
 
-        self.load = LoadNamespace(http, tz=tz, cache=cache_store)
-        self.prices = PricesNamespace(http, tz=tz, cache=cache_store)
-        self.generation = GenerationNamespace(http, tz=tz, cache=cache_store)
-        self.transmission = TransmissionNamespace(http, tz=tz, cache=cache_store)
-        self.balancing = BalancingNamespace(http, tz=tz, cache=cache_store)
+        self.load = LoadNamespace(http, tz=tz, output_tz=output_tz, cache=cache_store)
+        self.prices = PricesNamespace(http, tz=tz, output_tz=output_tz, cache=cache_store)
+        self.generation = GenerationNamespace(http, tz=tz, output_tz=output_tz, cache=cache_store)
+        self.transmission = TransmissionNamespace(http, tz=tz, output_tz=output_tz, cache=cache_store)
+        self.balancing = BalancingNamespace(http, tz=tz, output_tz=output_tz, cache=cache_store)
 
         # Expose for CLI cache commands
         self._cache = cache_store

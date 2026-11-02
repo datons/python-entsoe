@@ -32,6 +32,7 @@ class TransmissionNamespace(BaseNamespace):
         extra_params: dict | None = None,
         *,
         cache_topic: str,
+        output_tz: str | None,
     ) -> pd.DataFrame:
         """Shared logic for transmission queries with multi-value support.
 
@@ -75,9 +76,9 @@ class TransmissionNamespace(BaseNamespace):
                     "out_Domain": self._area(country_from),
                     **extra,
                 }
-                return self._query_single_border(
+                return self._output(self._query_single_border(
                     cache_topic, country_from, country_to, params, start, end,
-                )
+                ), country_to, output_tz)
 
             froms = country_from if is_multi_from else [country_from]
             tos = country_to if is_multi_to else [country_to]
@@ -92,9 +93,9 @@ class TransmissionNamespace(BaseNamespace):
                 "out_Domain": self._area(cf),
                 **extra,
             }
-            return self._query_single_border(
+            return self._output(self._query_single_border(
                 cache_topic, cf, ct, params, start, end,
-            )
+            ), ct, output_tz)
 
         frames = []
         for cf, ct in pairs:
@@ -109,7 +110,7 @@ class TransmissionNamespace(BaseNamespace):
             )
             df["border"] = f"{country_name(cf)} → {country_name(ct)}"
             frames.append(df)
-        return pd.concat(frames, ignore_index=True)
+        return self._output(pd.concat(frames, ignore_index=True), pairs[0][1], output_tz)
 
     def _query_single_border(
         self,
@@ -139,6 +140,8 @@ class TransmissionNamespace(BaseNamespace):
         country_from: OneOrMany | None = None,
         country_to: OneOrMany | None = None,
         borders: OneOrMany | None = None,
+        *,
+        output_tz: str | None = None,
     ) -> pd.DataFrame:
         """Query physical cross-border flows.
 
@@ -153,12 +156,14 @@ class TransmissionNamespace(BaseNamespace):
                 and comma-separated combinations like ``"ES-*,FR-*"``.
                 Cannot be combined with country_from/country_to.
 
+            output_tz: Override the client result timezone. With local, cross-border output follows the first in_domain (importing) zone.
+
         Returns:
             DataFrame with columns: timestamp, value (MW).
         """
         return self._transmission_query(
             "A11", start, end, country_from, country_to, borders,
-            cache_topic="crossborder_flows",
+            cache_topic="crossborder_flows", output_tz=output_tz,
         )
 
     def scheduled_exchanges(
@@ -168,6 +173,8 @@ class TransmissionNamespace(BaseNamespace):
         country_from: OneOrMany | None = None,
         country_to: OneOrMany | None = None,
         borders: OneOrMany | None = None,
+        *,
+        output_tz: str | None = None,
     ) -> pd.DataFrame:
         """Query scheduled commercial exchanges (day-ahead).
 
@@ -179,12 +186,14 @@ class TransmissionNamespace(BaseNamespace):
                 When either is a list, results include a ``border`` column.
             borders: Border spec or list of specs. See :meth:`crossborder_flows`.
 
+            output_tz: Override the client result timezone. With local, cross-border output follows the first in_domain (importing) zone.
+
         Returns:
             DataFrame with columns: timestamp, value (MW).
         """
         return self._transmission_query(
             "A09", start, end, country_from, country_to, borders,
-            cache_topic="scheduled_exchanges",
+            cache_topic="scheduled_exchanges", output_tz=output_tz,
         )
 
     def net_transfer_capacity(
@@ -194,6 +203,8 @@ class TransmissionNamespace(BaseNamespace):
         country_from: OneOrMany | None = None,
         country_to: OneOrMany | None = None,
         borders: OneOrMany | None = None,
+        *,
+        output_tz: str | None = None,
     ) -> pd.DataFrame:
         """Query day-ahead net transfer capacity.
 
@@ -205,11 +216,13 @@ class TransmissionNamespace(BaseNamespace):
                 When either is a list, results include a ``border`` column.
             borders: Border spec or list of specs. See :meth:`crossborder_flows`.
 
+            output_tz: Override the client result timezone. With local, cross-border output follows the first in_domain (importing) zone.
+
         Returns:
             DataFrame with columns: timestamp, value (MW).
         """
         return self._transmission_query(
             "A61", start, end, country_from, country_to, borders,
             extra_params={"contract_MarketAgreement.Type": "A01"},
-            cache_topic="net_transfer_capacity",
+            cache_topic="net_transfer_capacity", output_tz=output_tz,
         )
